@@ -17,6 +17,11 @@ describe("resolveShortcut", () => {
     expect(resolveShortcut(key("o", { metaKey: true }))).toBe("open");
   });
 
+  it("toggles debug overlay with Ctrl/Cmd+Shift+D", () => {
+    expect(resolveShortcut(key("D", { ctrlKey: true, shiftKey: true }))).toBe("toggle-debug");
+    expect(resolveShortcut(key("d", { metaKey: true }))).toBeNull();
+  });
+
   it("maps zoom keys", () => {
     expect(resolveShortcut(key("=", { ctrlKey: true }))).toBe("zoom-in");
     expect(resolveShortcut(key("+", { ctrlKey: true, shiftKey: true }))).toBe("zoom-in");

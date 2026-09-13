@@ -426,3 +426,117 @@ input:focus-visible {
   gap: 8px;
   margin-top: 16px;
 }
+
+/* ---------- Page status ---------- */
+.page-row {
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.page-status {
+  font-size: 11px;
+}
+
+.page-status.muted {
+  color: var(--ink-muted-48);
+}
+
+.page-status.error {
+  color: var(--danger);
+}
+
+.page-row.active .page-status {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.page-status.spinner {
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid var(--chip);
+  border-top-color: var(--ink-muted-48);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- Debug (development only) ---------- */
+.debug-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.debug-item {
+  fill: rgba(0, 160, 255, 0.08);
+  stroke: rgba(0, 140, 230, 0.9);
+  stroke-width: 0.75;
+}
+
+.debug-line {
+  fill: none;
+  stroke: rgba(220, 0, 120, 0.9);
+  stroke-width: 1;
+  stroke-dasharray: 4 2;
+}
+
+.debug-label {
+  font: 9px ui-monospace, SFMono-Regular, Menlo, monospace;
+  fill: rgb(200, 0, 110);
+  paint-order: stroke;
+  stroke: rgba(255, 255, 255, 0.9);
+  stroke-width: 2.5px;
+}
+
+.debug-panel {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  width: 220px;
+  padding: 10px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  background: var(--canvas);
+  font-size: 12px;
+  z-index: 40;
+}
+
+.debug-panel-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.debug-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+}
+
+.debug-stats {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 8px;
+  margin: 8px 0 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--hairline);
+}
+
+.debug-stats dt {
+  color: var(--ink-muted-48);
+}
+
+.debug-stats dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}

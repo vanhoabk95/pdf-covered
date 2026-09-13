@@ -1,18 +1,22 @@
 import { useCallback, useEffect, useState } from "react";
+import { DebugPanel } from "../components/DebugPanel";
 import { ErrorDialog, PasswordDialog } from "../components/Dialogs";
 import { EmptyState } from "../components/EmptyState";
 import { PdfViewer } from "../components/PdfViewer";
 import { Sidebar } from "../components/Sidebar";
 import { Toolbar } from "../components/Toolbar";
 import { onPdfDrop, pickPdf, type OpenedFile } from "../platform/fileIO";
+import { useDebugStore } from "../state/debugStore";
 import { useDocumentStore } from "../state/documentStore";
 import { useViewerStore } from "../state/viewerStore";
 import { log } from "./log";
 import { resolveShortcut } from "./shortcuts";
+import { useDocumentProcessing } from "./useDocumentProcessing";
 
 export function App() {
   const status = useDocumentStore((s) => s.status);
   const [dropHover, setDropHover] = useState(false);
+  useDocumentProcessing();
 
   const openFile = useCallback((file: Promise<OpenedFile> | OpenedFile) => {
     useViewerStore.getState().reset();
@@ -51,11 +55,14 @@ export function App() {
 
       const docReady = useDocumentStore.getState().status === "ready";
       const viewer = useViewerStore.getState();
-      if (action !== "open" && !docReady) return;
+      if (action !== "open" && action !== "toggle-debug" && !docReady) return;
       e.preventDefault();
       switch (action) {
         case "open":
           void openDialog();
+          break;
+        case "toggle-debug":
+          useDebugStore.getState().toggle();
           break;
         case "zoom-in":
           viewer.zoomStep(1);
@@ -90,6 +97,7 @@ export function App() {
         </main>
       </div>
       {dropHover && <div className="drop-overlay">Drop PDF to open</div>}
+      {hasDocument && <DebugPanel />}
       {status === "password" && <PasswordDialog />}
       <ErrorDialog />
     </div>

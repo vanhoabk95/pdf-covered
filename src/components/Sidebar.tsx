@@ -1,12 +1,15 @@
 import { useDocumentStore } from "../state/documentStore";
+import { usePageContentStore, type PageContent } from "../state/pageContentStore";
 import { useViewerStore } from "../state/viewerStore";
 
 /** Document + page list. Detection counts and results are added in Phase E. */
 export function Sidebar() {
   const fileName = useDocumentStore((s) => s.fileName);
   const pageCount = useDocumentStore((s) => s.pageCount);
+  const pages = usePageContentStore((s) => s.pages);
   const currentPage = useViewerStore((s) => s.currentPage);
   const goToPage = useViewerStore((s) => s.goToPage);
+  const processed = pages.filter((p) => p.state === "ready" || p.state === "error").length;
 
   return (
     <aside className="sidebar">
@@ -17,6 +20,7 @@ export function Sidebar() {
         </p>
         <p className="sidebar-meta">
           {pageCount} {pageCount === 1 ? "page" : "pages"}
+          {processed < pageCount && ` · analyzing ${processed}/${pageCount}`}
         </p>
       </section>
 
@@ -30,7 +34,8 @@ export function Sidebar() {
                 onClick={() => goToPage(i)}
                 aria-current={i === currentPage ? "page" : undefined}
               >
-                Page {i + 1}
+                <span>Page {i + 1}</span>
+                <PageStatus page={pages[i]} />
               </button>
             </li>
           ))}
@@ -38,4 +43,14 @@ export function Sidebar() {
       </section>
     </aside>
   );
+}
+
+function PageStatus({ page }: { page: PageContent | undefined }) {
+  if (!page || page.state === "pending") return <span className="page-status muted">·</span>;
+  if (page.state === "extracting" || page.state === "detecting") {
+    return <span className="page-status spinner" aria-label="Analyzing" />;
+  }
+  if (page.state === "error") return <span className="page-status error">Error</span>;
+  if (page.noTextLayer) return <span className="page-status muted" title="No text layer (scanned?)">No text</span>;
+  return null;
 }

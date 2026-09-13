@@ -23,9 +23,9 @@ export default defineConfig(() => ({
   test: {
     environment: "node",
     include: ["src/**/*.test.ts", "tests/**/*.test.ts"],
-    alias: {
+    alias: [
       // The modern pdfjs build targets browsers; Node tests use the legacy build.
-      "pdfjs-dist": "pdfjs-dist/legacy/build/pdf.mjs",
-    },
+      { find: /^pdfjs-dist$/, replacement: "pdfjs-dist/legacy/build/pdf.mjs" },
+    ],
   },
 }));

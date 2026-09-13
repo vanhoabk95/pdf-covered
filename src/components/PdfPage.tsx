@@ -3,6 +3,7 @@ import { memo, useEffect, useRef, useState } from "react";
 import { log } from "../app/log";
 import { CSS_PX_PER_PT, createViewportTransform } from "../pdf/coordinateTransform";
 import type { PageGeometry } from "../pdf/types";
+import { DebugOverlay } from "./DebugOverlay";
 import { MaskOverlay } from "./MaskOverlay";
 
 /** Largest backing canvas we allow (pixels) before lowering render resolution. */
@@ -77,6 +78,7 @@ export const PdfPage = memo(function PdfPage({ pdf, pageIndex, geometry, zoom }:
     <div className="pdf-page" style={{ width: vt.width, height: vt.height }} data-page-index={pageIndex}>
       <div ref={canvasHostRef} className="pdf-page-canvas-host" />
       <MaskOverlay pageIndex={pageIndex} viewport={vt} />
+      <DebugOverlay pageIndex={pageIndex} viewport={vt} />
       {error && <div className="pdf-page-error">{error}</div>}
     </div>
   );

@@ -1,4 +1,11 @@
-export type ShortcutAction = "open" | "zoom-in" | "zoom-out" | "fit-page" | "prev-page" | "next-page";
+export type ShortcutAction =
+  | "open"
+  | "zoom-in"
+  | "zoom-out"
+  | "fit-page"
+  | "prev-page"
+  | "next-page"
+  | "toggle-debug";
 
 export interface KeyInput {
   key: string;
@@ -16,6 +23,7 @@ export function resolveShortcut(e: KeyInput): ShortcutAction | null {
   if (mod && !e.altKey) {
     const key = e.key.toLowerCase();
     if (key === "o" && !e.shiftKey) return "open";
+    if (key === "d" && e.shiftKey) return "toggle-debug";
     if (key === "=" || key === "+") return "zoom-in";
     if (key === "-" || key === "_") return "zoom-out";
     if (key === "0" && !e.shiftKey) return "fit-page";
