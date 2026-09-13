@@ -1,8 +1,8 @@
 import type { DetectionResult } from "../detection/types";
 import type { TextLine } from "../grouping/types";
 import type { PageGeometry } from "../pdf/types";
-import { applyOverride, generateMasks, type MaskPadding } from "./maskGenerator";
-import { classifyConfidence, type DetectionThresholds } from "./thresholds";
+import { applyOverride, effectiveTier, generateMasks, type MaskPadding } from "./maskGenerator";
+import type { DetectionThresholds } from "./thresholds";
 import type { MaskOverride, MaskRegion } from "./types";
 
 export interface ResolvePageMasksInput {
@@ -28,7 +28,7 @@ export function resolvePageMasks(input: ResolvePageMasksInput): MaskRegion[] {
   const candidates = generateMasks({ pageIndex, geometry, lines: content.lines, detections: content.detections, padding });
   for (const m of candidates) {
     const override = overrides[m.key];
-    const auto = override === "confirmed" || (override !== "ignored" && classifyConfidence(m.confidence, thresholds) === "auto");
+    const auto = effectiveTier(applyOverride(m, override, false), thresholds) === "auto";
     if (auto && m.lineId) masked.add(m.lineId);
   }
   const detected = generateMasks({

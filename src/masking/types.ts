@@ -20,6 +20,8 @@ export interface MaskRegion {
   status: MaskStatus;
   /** False while the user temporarily reveals the original ("Show original"). */
   visible: boolean;
+  /** 0..1 recognition confidence when the region's text came from OCR. */
+  ocrConfidence?: number;
   lineId?: string;
   itemIds?: string[];
 }

@@ -4,6 +4,7 @@ import type { DetectableLine, DetectionResult } from "../detection/types";
 import { groupLines } from "../grouping/lineGrouper";
 import type { TextLine } from "../grouping/types";
 import { classifyConfidence } from "../masking/thresholds";
+import { hasLittleText, pageHasImages } from "../ocr/candidates";
 import { extractPageText } from "../pdf/textExtractor";
 import type { PdfTextItem } from "../pdf/types";
 import { nextPageToProcess, type PageProcessingState } from "./processingQueue";
@@ -13,9 +14,10 @@ export interface PageContentUpdate {
   items?: PdfTextItem[];
   lines?: TextLine[];
   detections?: DetectionResult[];
-  /** No extractable text: candidate for OCR (spec §22). */
+  /** Little or no extractable text but image content: a scanned page (spec §22). */
   noTextLayer?: boolean;
   ocr?: boolean;
+  ocrError?: string;
   error?: string;
   timings?: { extractMs: number; groupMs: number; detectMs: number; ocrMs?: number };
 }
@@ -25,6 +27,11 @@ export interface DocumentProcessorDeps {
   getPage(pageIndex: number): Promise<PDFPageProxy>;
   getCurrentPage(): number;
   onPageUpdate(pageIndex: number, update: PageContentUpdate): void;
+  /** OCR for scanned pages. Omit to never OCR. */
+  ocr?: {
+    enabled(): boolean;
+    recognize(pageIndex: number, page: PDFPageProxy): Promise<TextLine[]>;
+  };
   /** Runs detectors on the page's lines (usually in a worker). Omit to skip detection. */
   detectLines?(lines: DetectableLine[]): Promise<DetectionResult[]>;
   /** Lets the UI breathe between pages. Defaults to a macrotask. */
@@ -41,7 +48,7 @@ const macrotask = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 /**
  * Processes pages one at a time in priority order, re-evaluating the current page after
  * each one so jumping around the document reprioritizes remaining work.
- * Stages per page: extracting → detecting → ready (or error).
+ * Stages per page: extracting → (ocr, for scanned pages) → detecting → ready (or error).
  */
 export function startDocumentProcessing(deps: DocumentProcessorDeps): ProcessingHandle {
   const states: PageProcessingState[] = Array(deps.pageCount).fill("pending");
@@ -64,11 +71,33 @@ export function startDocumentProcessing(deps: DocumentProcessorDeps): Processing
         if (cancelled) return;
 
         const t1 = performance.now();
-        const lines = groupLines(items);
+        let lines = groupLines(items);
         const groupMs = elapsedMs(t1);
 
+        // Scanned page: little text but raster content → OCR (spec §22).
+        const noTextLayer = hasLittleText(items) && (await pageHasImages(page));
+        if (cancelled) return;
+        let ocr = false;
+        let ocrError: string | undefined;
+        let ocrMs: number | undefined;
+        if (noTextLayer && deps.ocr?.enabled()) {
+          states[pageIndex] = "ocr";
+          deps.onPageUpdate(pageIndex, { state: "ocr", items, lines, noTextLayer });
+          const t = performance.now();
+          try {
+            const ocrLines = await deps.ocr.recognize(pageIndex, page);
+            lines = [...lines, ...ocrLines];
+            ocr = true;
+          } catch (err) {
+            ocrError = err instanceof Error ? err.message : String(err);
+            log.error(`page ${pageIndex + 1} OCR failed`, err);
+          }
+          ocrMs = elapsedMs(t);
+          if (cancelled) return;
+        }
+
         states[pageIndex] = "detecting";
-        deps.onPageUpdate(pageIndex, { state: "detecting", items, lines, noTextLayer: items.length === 0 });
+        deps.onPageUpdate(pageIndex, { state: "detecting", items, lines, noTextLayer, ocr, ocrError });
 
         const t2 = performance.now();
         const detections =
@@ -82,14 +111,17 @@ export function startDocumentProcessing(deps: DocumentProcessorDeps): Processing
           items,
           lines,
           detections,
-          noTextLayer: items.length === 0,
-          timings: { extractMs, groupMs, detectMs },
+          noTextLayer,
+          ocr,
+          ocrError,
+          timings: { extractMs, groupMs, detectMs, ocrMs },
         });
         const tiers = detections.map((d) => classifyConfidence(d.confidence));
         log.info("page processed", {
           page: pageIndex + 1,
           items: items.length,
           lines: lines.length,
+          ocr,
           detected: tiers.filter((t) => t === "auto").length,
           uncertain: tiers.filter((t) => t === "uncertain").length,
           extractMs,

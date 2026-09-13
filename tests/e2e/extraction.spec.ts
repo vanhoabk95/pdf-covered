@@ -84,10 +84,17 @@ test.describe("text extraction alignment", () => {
     expect((await inkInsideLineBoxes(page, 1)).fraction).toBeGreaterThan(0.99);
   });
 
-  test("sidebar flags pages without a text layer", async ({ page }) => {
+  test("sidebar marks scanned pages: OCR'd by default, 'No text' when OCR is off", async ({ page }) => {
     await openFixture(page, "scanned-page");
-    await expect(page.getByRole("button", { name: /Page 2/ })).toContainText("No text");
-    await expect(page.getByRole("button", { name: /Page 1/ })).not.toContainText("No text");
+    await expect(page.getByRole("button", { name: /^Page 2\b/ })).toContainText("OCR", { timeout: 30_000 });
+    await expect(page.getByRole("button", { name: /^Page 1\b/ })).not.toContainText("OCR");
+
+    await page.getByRole("button", { name: "Settings" }).click();
+    await page.getByLabel("OCR scanned pages (pages without a text layer)").uncheck();
+    await page.getByRole("button", { name: "Done" }).click();
+    await expect(page.getByRole("button", { name: /^Page 2\b/ })).toContainText("No text");
+    await expect(page.locator(".sidebar-warning")).toContainText("no text layer");
+    await page.evaluate(() => localStorage.clear());
   });
 
   test("debug panel reports page statistics", async ({ page }) => {

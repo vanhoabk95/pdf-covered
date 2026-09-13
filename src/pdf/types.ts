@@ -56,6 +56,10 @@ export interface PdfTextItem {
   fontName: string;
   hasEOL: boolean;
   transform: Matrix;
+  /** "ocr" for text recognized from page images. */
+  source?: "text" | "ocr";
+  /** 0..1 OCR recognition confidence (spec §23), only for OCR items. */
+  ocrConfidence?: number;
 }
 
 /** A page geometry projected onto the screen at a given CSS scale. */

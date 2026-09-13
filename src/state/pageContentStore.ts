@@ -13,6 +13,7 @@ export interface PageContent {
   noTextLayer: boolean;
   /** Text on this page came from OCR (no text layer). */
   ocr?: boolean;
+  ocrError?: string;
   error?: string;
   timings?: { extractMs: number; groupMs: number; detectMs: number; ocrMs?: number };
 }

@@ -2,7 +2,7 @@ import type { DetectionResult } from "../detection/types";
 import { intersectBoxes, padBox } from "../grouping/bbox";
 import type { TextLine } from "../grouping/types";
 import type { BoundingBox, PageGeometry } from "../pdf/types";
-import { classifyConfidence, type ConfidenceTier, type DetectionThresholds } from "./thresholds";
+import { classifyConfidence, OCR_MIN_CONFIDENCE, type ConfidenceTier, type DetectionThresholds } from "./thresholds";
 import type { MaskOverride, MaskRegion, MaskStatus } from "./types";
 
 export interface MaskPadding {
@@ -73,6 +73,7 @@ export function generateMasks({
       confidence: detection.confidence,
       status: "auto",
       visible: true,
+      ocrConfidence: line.ocrConfidence,
       lineId: line.id,
       itemIds: line.itemIds,
     });
@@ -91,7 +92,10 @@ export function applyOverride(mask: MaskRegion, override: MaskOverride | undefin
 export function effectiveTier(mask: MaskRegion, thresholds: DetectionThresholds): ConfidenceTier {
   if (mask.status === "confirmed" || mask.status === "manual") return "auto";
   if (mask.status === "ignored") return "none";
-  return classifyConfidence(mask.confidence, thresholds);
+  const tier = classifyConfidence(mask.confidence, thresholds);
+  // Poorly recognized OCR text is never masked or redacted automatically.
+  if (tier === "auto" && mask.ocrConfidence !== undefined && mask.ocrConfidence < OCR_MIN_CONFIDENCE) return "uncertain";
+  return tier;
 }
 
 export function maskDisplay(mask: MaskRegion, thresholds: DetectionThresholds, showUncertain: boolean): MaskDisplay {

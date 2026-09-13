@@ -27,3 +27,4 @@ dist-ssr
 public/pdfjs
 test-results
 playwright-report
+public/tesseract

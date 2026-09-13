@@ -1,19 +1,23 @@
 # CLAUDE.md — Vietnamese PDF Masking Viewer
 
-Local desktop PDF viewer: detects Vietnamese text in PDF text layers, overlays masks,
+Local desktop PDF viewer: detects Vietnamese text in PDF text layers (and via OCR on scanned
+pages), overlays masks,
 lets the user correct detections, exports a securely redacted PDF.
 Product spec: docs/SPEC.md. Implementation plan: docs/PLAN.md.
 Visual language: DESIGN.md (adapt to a compact desktop UI).
 
 ## Stack
 - Tauri 2 (Rust shell: window, dialogs, FS, hashing only — no business logic in Rust)
-- React 19 + TypeScript (strict) + Vite 8, state via Zustand (+ zundo for undo/redo)
+- React 19 + TypeScript (strict) + Vite 8, state via Zustand (undo/redo: masking/history.ts)
 - pdfjs-dist 6: rendering + text extraction. v6 notes: no `convertToViewportRectangle`
   (use our coordinateTransform), dispose docs via `destroyPdf()` (`doc.loadingTask.destroy()`),
   render with `page.render({ canvas, viewport })`. Runtime assets (cmaps, fonts, wasm) are copied
   to `public/pdfjs` by `scripts/copy-pdfjs-assets.mjs` (predev/prebuild) — never load from a CDN.
 - mupdf (WASM, AGPL-3.0): redaction export + verification, runs in a worker
 - franc-min (MIT) + custom heuristics: language detection, runs in `workers/detection.worker.ts`
+- tesseract.js 7 (Apache-2.0) + vie/eng LSTM data: OCR for scanned pages behind `OcrEngine`
+  (PaddleOCR could implement the same interface). Assets copied to `public/tesseract` by
+  `scripts/copy-ocr-assets.mjs` (predev/prebuild/pretest)
 - Vitest (unit/integration, Node), Playwright (UI alignment tests against Vite dev server)
 
 ## Commands
@@ -28,7 +32,7 @@ Rust comes from Homebrew `rustup`; its proxies are not on PATH by default:
 - pnpm tauri build
 
 ## Architecture (pipeline — keep stages as pure, separately testable modules)
-PdfLoader → TextExtractor → LineGrouper → Detector(s) → MaskGenerator → MaskOverlay
+PdfLoader → TextExtractor → LineGrouper → [OCR if scanned] → Detector(s) → MaskGenerator → MaskOverlay
 Orchestrated by `pipeline/documentProcessor.ts` (one page at a time, priority from
 `pipeline/processingQueue.ts`), results in `state/pageContentStore.ts`.
 Extraction calls `page.getTextContent()` from the main thread — PDF.js already parses in its own
@@ -40,6 +44,8 @@ src/
   pdf/        pdfLoader, textExtractor, coordinateTransform (ONLY place doing PDF↔viewport math)
   grouping/   lineGrouper (angle bucket → baseline band → split at gaps), bbox utils
   pipeline/   documentProcessor, processingQueue
+  ocr/        types (OcrEngine), tesseractEngine, ocrToLines (image px → PDF space), candidates,
+              pageOcr (render with PDF.js ≈300 DPI + session engine)
   detection/  syllables (Vietnamese onset+rhyme+tone validator), heuristics (signals, names),
               languageDetector (franc, supporting evidence only), vietnameseDetector (weights),
               registry (ACTIVE_DETECTORS), labelledLines (evaluation sets), types (LineDetector)
@@ -110,6 +116,17 @@ tests/        integration + e2e
   require explicit acknowledgement.
 - Playwright's Node side can't load the modern pdfjs build (needs `Uint8Array.toHex`); in e2e,
   check downloaded files with mupdf.
+
+## OCR (Phase H)
+- A page is "scanned" (`noTextLayer`) when it has < 20 extractable characters AND draws images.
+  If OCR is enabled it runs between grouping and detection; results are cached per page.
+- OCR lines become normal `TextLine`s (items with `source: "ocr"`), so detection, masks and
+  export are shared. `ocrConfidence` stays separate from language confidence; OCR lines below
+  0.6 recognition confidence are capped to "uncertain" in `effectiveTier`.
+- Export removes image pixels under regions (`REDACT_IMAGE_PIXELS`). `tests/ocr.test.ts`
+  re-OCRs the exported page to prove the Vietnamese text is unreadable.
+- Node tests render with MuPDF (`tests/helpers/ocr.ts`); the app renders with PDF.js.
+- Tesseract `{code, data}` language objects don't work in v7 — use `langPath` + `gzip: true`.
 
 ## Testing
 - Pure functions get unit tests next to them (`*.test.ts`). Node tests alias `pdfjs-dist` to the

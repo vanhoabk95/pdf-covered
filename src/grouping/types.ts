@@ -15,4 +15,6 @@ export interface TextLine {
   rotation: number;
   /** Median font size of the items. */
   fontSize: number;
+  /** 0..1 OCR recognition confidence for lines read from images; kept apart from language confidence. */
+  ocrConfidence?: number;
 }

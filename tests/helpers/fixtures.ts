@@ -1,5 +1,6 @@
 /// <reference types="node" />
 import fontkit from "@pdf-lib/fontkit";
+import * as mupdf from "mupdf";
 import { readFileSync } from "node:fs";
 import { deflateSync } from "node:zlib";
 import { degrees, PDFDocument, type PDFFont, type PDFPage } from "pdf-lib";
@@ -35,6 +36,8 @@ export interface FixturePage {
 export interface Fixture {
   name: string;
   pages: FixturePage[];
+  /** Rasterize every page into an image-only page at this resolution (simulated scan). */
+  scanDpi?: number;
 }
 
 const FONT_DIR = new URL("../fonts/", import.meta.url);
@@ -149,6 +152,23 @@ const fixtures: Fixture[] = [
     ],
   },
   {
+    // Image-only pages with real text: exercises OCR → detection → masking → pixel redaction.
+    name: "scanned-mixed",
+    scanDpi: 150,
+    pages: [
+      {
+        lines: [
+          { text: "Project Overview", x: L, y: 720, size: 20, bold: true, vi: false },
+          { text: "Mục tiêu của dự án là cải thiện hệ thống.", x: L, y: 680, size: 13, vi: true },
+          { text: "Target luminance: 500 nit", x: L, y: 650, size: 13, vi: false },
+          { text: "Người phụ trách: Nguyễn Văn A", x: L, y: 620, size: 13, vi: true },
+          { text: "Kiểm tra gamma value", x: L, y: 590, size: 13, vi: true },
+          { text: "Gamma 2.2, white point D65", x: L, y: 560, size: 13, vi: false },
+        ],
+      },
+    ],
+  },
+  {
     name: "scanned-page",
     pages: [
       { lines: [{ text: "Cover page with a text layer", x: L, y: 720, vi: false }] },
@@ -191,7 +211,24 @@ export async function buildFixture(fixture: Fixture | string): Promise<Uint8Arra
       page.drawImage(png, { x: 56, y: 100, width: 500, height: 650 });
     }
   }
-  return doc.save({ useObjectStreams: false });
+  const bytes = await doc.save({ useObjectStreams: false });
+  return spec.scanDpi ? rasterize(bytes, spec.scanDpi) : bytes;
+}
+
+/** Renders each page to a PNG and builds a new PDF containing only those images. */
+async function rasterize(bytes: Uint8Array, dpi: number): Promise<Uint8Array> {
+  const source = mupdf.Document.openDocument(bytes, "application/pdf");
+  const out = await PDFDocument.create();
+  for (let i = 0; i < source.countPages(); i++) {
+    const page = source.loadPage(i);
+    const [x0, y0, x1, y1] = page.getBounds();
+    const scale = dpi / 72;
+    const png = page.toPixmap(mupdf.Matrix.scale(scale, scale), mupdf.ColorSpace.DeviceGray, false).asPNG();
+    const image = await out.embedPng(png);
+    const target = out.addPage([x1 - x0, y1 - y0]);
+    target.drawImage(image, { x: 0, y: 0, width: x1 - x0, height: y1 - y0 });
+  }
+  return out.save({ useObjectStreams: false });
 }
 
 function drawLine(page: PDFPage, line: FixtureLine, font: PDFFont) {

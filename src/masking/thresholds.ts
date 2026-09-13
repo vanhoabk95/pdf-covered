@@ -8,6 +8,9 @@ export interface DetectionThresholds {
   uncertain: number;
 }
 
+/** OCR lines recognized with less confidence than this can be "uncertain" at most (spec §56). */
+export const OCR_MIN_CONFIDENCE = 0.6;
+
 export const DEFAULT_THRESHOLDS: DetectionThresholds = { auto: 0.85, uncertain: 0.6 };
 
 /** Spec §16 sensitivity presets (auto threshold). */
