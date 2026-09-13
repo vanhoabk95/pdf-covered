@@ -4,12 +4,14 @@ import { ErrorDialog, PasswordDialog } from "../components/Dialogs";
 import { EmptyState } from "../components/EmptyState";
 import { MaskInspector } from "../components/MaskInspector";
 import { PdfViewer } from "../components/PdfViewer";
+import { SettingsDialog } from "../components/SettingsDialog";
 import { Sidebar } from "../components/Sidebar";
 import { Toolbar } from "../components/Toolbar";
 import { onPdfDrop, pickPdf, type OpenedFile } from "../platform/fileIO";
 import { useDebugStore } from "../state/debugStore";
 import { useDocumentStore } from "../state/documentStore";
 import { useMaskStore } from "../state/maskStore";
+import { usePageContentStore } from "../state/pageContentStore";
 import { useViewerStore } from "../state/viewerStore";
 import { log } from "./log";
 import { resolveShortcut } from "./shortcuts";
@@ -18,6 +20,7 @@ import { useDocumentProcessing } from "./useDocumentProcessing";
 export function App() {
   const status = useDocumentStore((s) => s.status);
   const [dropHover, setDropHover] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   useDocumentProcessing();
 
   const openFile = useCallback((file: Promise<OpenedFile> | OpenedFile) => {
@@ -51,6 +54,10 @@ export function App() {
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && useViewerStore.getState().tool !== "select") {
+        useViewerStore.getState().setTool("select");
+        return;
+      }
       const target = e.target as HTMLElement | null;
       const inTextField = !!target?.closest("input, textarea, [contenteditable='true']");
       const action = resolveShortcut({ ...pick(e), inTextField });
@@ -101,9 +108,9 @@ export function App() {
 
   return (
     <div className="app">
-      <Toolbar onOpen={openDialog} />
+      <Toolbar onOpen={openDialog} onOpenSettings={() => setSettingsOpen(true)} />
       <div className="app-body">
-        {hasDocument && <Sidebar />}
+        {hasDocument && <Sidebar onStartDetection={() => usePageContentStore.getState().start()} />}
         <main className="viewer">
           {hasDocument ? <PdfViewer /> : <EmptyState onOpen={openDialog} loading={status === "loading"} />}
         </main>
@@ -111,6 +118,7 @@ export function App() {
       {dropHover && <div className="drop-overlay">Drop PDF to open</div>}
       {hasDocument && <MaskInspector />}
       {hasDocument && <DebugPanel />}
+      {settingsOpen && <SettingsDialog onClose={() => setSettingsOpen(false)} />}
       {status === "password" && <PasswordDialog />}
       <ErrorDialog />
     </div>

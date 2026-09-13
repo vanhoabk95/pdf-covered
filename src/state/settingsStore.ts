@@ -1,25 +1,71 @@
 import { create } from "zustand";
-import { DEFAULT_MASK_PADDING, type MaskPadding } from "../masking/maskGenerator";
-import { DEFAULT_THRESHOLDS, type DetectionThresholds } from "../masking/thresholds";
+import { SENSITIVITY_PRESETS } from "../masking/thresholds";
+import {
+  DEFAULT_SETTINGS,
+  parseSettings,
+  serializeSettings,
+  SETTINGS_STORAGE_KEY,
+  type Sensitivity,
+  type Settings,
+} from "./settings";
 
-/** Non-sensitive user settings (spec §41). Persistence is added in Phase E. */
-interface SettingsState {
-  thresholds: DetectionThresholds;
-  showUncertain: boolean;
-  maskPadding: MaskPadding;
-  /** 0..1 — 1 fully obscures text (spec §14 default). */
-  maskOpacity: number;
-
+interface SettingsState extends Settings {
+  setSensitivity(sensitivity: Exclude<Sensitivity, "custom">): void;
   setAutoThreshold(value: number): void;
-  setShowUncertain(value: boolean): void;
+  setUncertainThreshold(value: number): void;
+  update(patch: Partial<Settings>): void;
+  resetToDefaults(): void;
 }
 
-export const useSettingsStore = create<SettingsState>((set) => ({
-  thresholds: DEFAULT_THRESHOLDS,
-  showUncertain: true,
-  maskPadding: DEFAULT_MASK_PADDING,
-  maskOpacity: 1,
+function readStored(): Settings {
+  try {
+    return parseSettings(globalThis.localStorage?.getItem(SETTINGS_STORAGE_KEY) ?? null);
+  } catch {
+    return DEFAULT_SETTINGS;
+  }
+}
 
-  setAutoThreshold: (value) => set((s) => ({ thresholds: { ...s.thresholds, auto: value } })),
-  setShowUncertain: (value) => set({ showUncertain: value }),
-}));
+function persist(settings: Settings): void {
+  try {
+    globalThis.localStorage?.setItem(SETTINGS_STORAGE_KEY, serializeSettings(settings));
+  } catch {
+    // Storage unavailable (private mode, quota): settings stay in memory for this session.
+  }
+}
+
+const pick = (s: SettingsState): Settings => ({
+  thresholds: s.thresholds,
+  showUncertain: s.showUncertain,
+  fillUncertain: s.fillUncertain,
+  maskPadding: s.maskPadding,
+  maskOpacity: s.maskOpacity,
+  autoDetect: s.autoDetect,
+  ocrEnabled: s.ocrEnabled,
+});
+
+export const useSettingsStore = create<SettingsState>((set, get) => {
+  const apply = (patch: Partial<Settings>) => {
+    set(patch);
+    persist(pick(get()));
+  };
+
+  return {
+    ...readStored(),
+
+    setSensitivity: (sensitivity) => {
+      const auto = SENSITIVITY_PRESETS[sensitivity];
+      const { thresholds } = get();
+      apply({ thresholds: { auto, uncertain: Math.min(thresholds.uncertain, auto) } });
+    },
+    setAutoThreshold: (value) => {
+      const { thresholds } = get();
+      apply({ thresholds: { auto: value, uncertain: Math.min(thresholds.uncertain, value) } });
+    },
+    setUncertainThreshold: (value) => {
+      const { thresholds } = get();
+      apply({ thresholds: { ...thresholds, uncertain: Math.min(value, thresholds.auto) } });
+    },
+    update: (patch) => apply(patch),
+    resetToDefaults: () => apply(DEFAULT_SETTINGS),
+  };
+});

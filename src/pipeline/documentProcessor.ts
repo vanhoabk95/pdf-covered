@@ -15,8 +15,9 @@ export interface PageContentUpdate {
   detections?: DetectionResult[];
   /** No extractable text: candidate for OCR (spec §22). */
   noTextLayer?: boolean;
+  ocr?: boolean;
   error?: string;
-  timings?: { extractMs: number; groupMs: number; detectMs: number };
+  timings?: { extractMs: number; groupMs: number; detectMs: number; ocrMs?: number };
 }
 
 export interface DocumentProcessorDeps {

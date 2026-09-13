@@ -1,4 +1,4 @@
-export type PageProcessingState = "pending" | "extracting" | "detecting" | "ready" | "error";
+export type PageProcessingState = "pending" | "extracting" | "ocr" | "detecting" | "ready" | "error";
 
 /**
  * Picks the next page to process (spec §25):

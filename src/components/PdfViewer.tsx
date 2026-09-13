@@ -10,6 +10,7 @@ import {
   visiblePageRange,
   type DocumentLayout,
 } from "../pdf/layout";
+import { createViewportTransform, pdfBoxToViewport } from "../pdf/coordinateTransform";
 import { useDocumentStore } from "../state/documentStore";
 import { useViewerStore } from "../state/viewerStore";
 import { PdfPage } from "./PdfPage";
@@ -63,7 +64,17 @@ export function PdfViewer() {
     const el = scrollRef.current;
     if (!el || !navigation) return;
     const slot = layout.slots[navigation.pageIndex];
-    if (slot) el.scrollTop = slot.top - PAGE_MARGIN / 2;
+    if (!slot) return;
+    if (!navigation.focus) {
+      el.scrollTop = slot.top - PAGE_MARGIN / 2;
+      return;
+    }
+    // Center the focused region horizontally and place it a third down the viewport.
+    const vt = createViewportTransform(geometries[navigation.pageIndex], useViewerStore.getState().zoom);
+    const box = pdfBoxToViewport(navigation.focus, vt);
+    const pageLeft = (Math.max(layout.maxWidth + PAGE_MARGIN * 2, el.clientWidth) - slot.width) / 2;
+    el.scrollTop = Math.max(0, slot.top + box.y - el.clientHeight / 3);
+    el.scrollLeft = Math.max(0, pageLeft + box.x + box.width / 2 - el.clientWidth / 2);
     // Only react to new navigation requests, not to layout changes.
   }, [navigation]); // eslint-disable-line react-hooks/exhaustive-deps
 

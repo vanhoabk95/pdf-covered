@@ -766,3 +766,249 @@ input:focus-visible {
   outline: 2px solid var(--primary-focus);
   outline-offset: 1px;
 }
+
+.mask-uncertain-filled rect {
+  fill: rgba(60, 60, 67, 0.55);
+}
+
+/* ---------- Manual mask tool ---------- */
+.manual-mask-layer {
+  position: absolute;
+  inset: 0;
+  cursor: crosshair;
+  touch-action: none;
+  z-index: 2;
+}
+
+.manual-mask-preview {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.35);
+  outline: 1.5px solid var(--primary-focus);
+}
+
+/* ---------- Toolbar controls ---------- */
+.btn-icon.pressed {
+  background: rgba(0, 102, 204, 0.12);
+  color: var(--primary);
+}
+
+.select-label select {
+  height: 26px;
+  padding: 0 6px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-xs);
+  background: var(--canvas);
+  font: inherit;
+}
+
+.check-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+  user-select: none;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (max-width: 1180px) {
+  .switch > span:first-child {
+    display: none;
+  }
+  .toolbar {
+    gap: 10px;
+  }
+}
+
+/* ---------- Sidebar (Phase E) ---------- */
+.sidebar-action {
+  margin-top: 8px;
+  width: 100%;
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 3px 8px;
+  margin: 0;
+}
+
+.summary dt {
+  color: var(--ink-muted-80);
+}
+
+.summary dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.sidebar-warning {
+  margin: 8px 0 0;
+  padding: 6px 8px;
+  border-radius: var(--radius-xs);
+  background: rgba(255, 159, 10, 0.14);
+  color: #8a4b00;
+  font-size: 12px;
+}
+
+.sidebar-tabs {
+  display: flex;
+  margin: 8px 12px 0;
+}
+
+.sidebar-tabs button {
+  flex: 1;
+}
+
+.sidebar-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  border-top: 0 !important;
+}
+
+.plain-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.page-status-ocr {
+  font-size: 10px;
+  letter-spacing: 0.3px;
+}
+
+.sidebar-empty {
+  margin: 8px 0;
+  color: var(--ink-muted-48);
+}
+
+.result-group + .result-group {
+  margin-top: 8px;
+}
+
+.result-page {
+  margin: 0 0 2px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-muted-48);
+}
+
+.result-row {
+  display: flex;
+  align-items: center;
+  border-radius: 6px;
+}
+
+.result-row:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.result-main {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  gap: 8px;
+  height: 26px;
+  align-items: center;
+  padding: 0 6px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+
+.result-confidence {
+  width: 34px;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-muted-48);
+  text-align: right;
+}
+
+.result-row.tier-uncertain .result-confidence {
+  color: #b25000;
+}
+
+.result-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.result-row.ignored .result-text {
+  color: var(--ink-muted-48);
+  text-decoration: line-through;
+}
+
+.result-restore {
+  height: 22px;
+  margin-right: 4px;
+  padding: 0 6px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-xs);
+  background: var(--canvas);
+  font-size: 11px;
+}
+
+/* ---------- Settings ---------- */
+.modal.settings {
+  width: 420px;
+  text-align: left;
+}
+
+.settings fieldset {
+  margin: 12px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.settings legend {
+  margin-bottom: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--ink-muted-48);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.field input[type="range"] {
+  width: 100%;
+  accent-color: var(--primary);
+}
+
+.field-hint {
+  font-size: 11px;
+  color: var(--ink-muted-48);
+}
+
+.field-hint.warn {
+  color: #b25000;
+}
+
+.check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.check-row input {
+  margin-top: 2px;
+  accent-color: var(--primary);
+}

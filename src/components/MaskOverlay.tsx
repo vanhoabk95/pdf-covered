@@ -25,6 +25,7 @@ export function MaskOverlay({ pageIndex, viewport }: MaskOverlayProps) {
   const thresholds = useSettingsStore((s) => s.thresholds);
   const showUncertain = useSettingsStore((s) => s.showUncertain);
   const opacity = useSettingsStore((s) => s.maskOpacity);
+  const fillUncertain = useSettingsStore((s) => s.fillUncertain);
 
   const open = (mask: MaskRegion, anchor: { x: number; y: number }) =>
     openInspector({ key: mask.key, pageIndex, anchor });
@@ -62,7 +63,7 @@ export function MaskOverlay({ pageIndex, viewport }: MaskOverlayProps) {
           return (
             <g
               key={mask.key}
-              className={`mask mask-${display} ${highlightKey === mask.key ? "mask-flash" : ""}`}
+              className={`mask mask-${display} ${display === "uncertain" && fillUncertain ? "mask-uncertain-filled" : ""} ${highlightKey === mask.key ? "mask-flash" : ""}`}
               data-mask-key={mask.key}
               data-line-id={mask.lineId}
               data-status={mask.status}

@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { startDocumentProcessing } from "../pipeline/documentProcessor";
 import { useDocumentStore } from "../state/documentStore";
 import { usePageContentStore } from "../state/pageContentStore";
+import { useSettingsStore } from "../state/settingsStore";
 import { useViewerStore } from "../state/viewerStore";
 import { createDetectionClient } from "../workers/detectionClient";
 
@@ -9,14 +10,18 @@ import { createDetectionClient } from "../workers/detectionClient";
 export function useDocumentProcessing(): void {
   const pdf = useDocumentStore((s) => s.pdf);
   const pageCount = useDocumentStore((s) => s.pageCount);
+  const started = usePageContentStore((s) => s.started);
 
+  // New document: reset page state; start automatically unless the user turned that off.
   useEffect(() => {
     const content = usePageContentStore.getState();
-    if (!pdf) {
-      content.reset();
-      return;
-    }
-    content.init(pageCount);
+    if (!pdf) content.reset();
+    else content.init(pageCount, useSettingsStore.getState().autoDetect);
+  }, [pdf, pageCount]);
+
+  useEffect(() => {
+    // Read the store directly: `started` from this render may still belong to the previous document.
+    if (!pdf || !started || !usePageContentStore.getState().started) return;
     const detection = createDetectionClient();
     const handle = startDocumentProcessing({
       pageCount,
@@ -29,5 +34,5 @@ export function useDocumentProcessing(): void {
       handle.cancel();
       detection.dispose();
     };
-  }, [pdf, pageCount]);
+  }, [pdf, pageCount, started]);
 }
