@@ -43,11 +43,11 @@ src/
   detection/  syllables (Vietnamese onset+rhyme+tone validator), heuristics (signals, names),
               languageDetector (franc, supporting evidence only), vietnameseDetector (weights),
               registry (ACTIVE_DETECTORS), labelledLines (evaluation sets), types (LineDetector)
-  masking/    thresholds (classifyConfidence), maskGenerator, maskStore
+  masking/    thresholds, maskGenerator (pad + clip), pageMasks (resolve with decisions), history (undo)
   export/     redactPdf, validateRedaction
   workers/    detection.worker.ts + detectionClient (plain postMessage RPC, inline fallback), export.worker.ts
-  state/      documentStore, viewerStore, pageContentStore, debugStore, settingsStore
-  components/ PdfViewer, PdfPage, MaskOverlay, DebugOverlay, Toolbar, DetectionSidebar, MaskInspector
+  state/      documentStore, viewerStore, pageContentStore, maskStore (decisions + undo), settingsStore, debugStore
+  components/ PdfViewer, PdfPage, MaskOverlay, MaskInspector, DebugOverlay/Panel, Toolbar, Sidebar
   platform/   fileIO adapter (Tauri vs browser)
 src-tauri/    Rust shell
 test-pdfs/    generated fixtures
@@ -84,8 +84,18 @@ tests/        integration + e2e
 - Weights live in `WEIGHTS` (vietnameseDetector.ts). Any change must keep
   `LABELLED_LINES` and `HOLDOUT_LINES` green; add new failure cases to `LABELLED_LINES` first.
   Don't tune against `HOLDOUT_LINES`.
-- Known issue for masking (Phase D): with tight leading (e.g. Courier from Quartz), line boxes
-  built from font ascent/descent overlap adjacent lines — masks must not cover visible neighbors.
+
+## Masking
+- Masks are *derived*: `resolvePageMasks(content, overrides, manual, revealed, thresholds)`.
+  Only user decisions are stored (maskStore): overrides by `regionKey` (page + rounded line bbox
+  + text hash), manual masks, reveal flags. Undo covers overrides + manual masks only.
+- Clipping: masks are clipped only against lines that stay *visible* (not auto/confirmed). Protect
+  a visible neighbour's baseline→cap-height band; its descenders may be covered so Vietnamese
+  diacritics stay hidden. If glyph bands truly overlap (very tight leading), split at the midpoint.
+- `isRedactable` = effective tier "auto" (confirmed/manual included, uncertain excluded, ignored
+  excluded). Phase F export must use exactly this predicate.
+- `tests/e2e/masking.spec.ts` measures canvas ink: >99% of Vietnamese-line ink under solid masks,
+  <1% of other lines' ink, across zoom levels and window sizes.
 
 ## Testing
 - Pure functions get unit tests next to them (`*.test.ts`). Node tests alias `pdfjs-dist` to the

@@ -581,3 +581,188 @@ input:focus-visible {
 .debug-tier-none .debug-label {
   fill: rgb(100, 100, 108);
 }
+
+/* ---------- Masks ---------- */
+.mask {
+  pointer-events: auto;
+  cursor: pointer;
+  outline: none;
+}
+
+.mask-solid rect {
+  fill: #000;
+}
+
+.mask-uncertain rect {
+  fill: rgba(255, 159, 10, 0.12);
+  stroke: #ff9f0a;
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+
+.mask-percent {
+  font: 600 10px var(--font);
+  fill: #b25000;
+  paint-order: stroke;
+  stroke: rgba(255, 255, 255, 0.9);
+  stroke-width: 3px;
+}
+
+.mask-revealed rect {
+  fill: transparent;
+  stroke: rgba(0, 0, 0, 0.55);
+  stroke-width: 1;
+  stroke-dasharray: 3 2;
+}
+
+.mask:focus-visible rect {
+  stroke: var(--primary-focus);
+  stroke-width: 2;
+}
+
+.mask-flash rect {
+  animation: mask-flash 0.4s ease-in-out 3;
+}
+
+@keyframes mask-flash {
+  50% {
+    stroke: var(--primary-focus);
+    stroke-width: 3;
+  }
+}
+
+/* ---------- Inspector ---------- */
+.inspector {
+  position: fixed;
+  z-index: 60;
+  width: 240px;
+  padding: 10px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  background: var(--canvas);
+  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+}
+
+.inspector-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.inspector-title {
+  font-weight: 600;
+}
+
+.inspector-badge {
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.inspector-badge.tier-uncertain {
+  background: rgba(255, 159, 10, 0.18);
+  color: #8a4b00;
+}
+
+.inspector-snippet {
+  margin: 0 0 8px;
+  padding: 6px 8px;
+  border-radius: var(--radius-xs);
+  background: var(--parchment);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.inspector-actions {
+  display: flex;
+  flex-direction: column;
+}
+
+.inspector-actions button {
+  height: 26px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  text-align: left;
+}
+
+.inspector-actions button:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
+.inspector-actions button.danger {
+  color: var(--danger);
+}
+
+.inspector-actions button.danger:hover {
+  background: var(--danger);
+  color: #fff;
+}
+
+.inspector-note {
+  margin: 6px 0 0;
+  padding-top: 6px;
+  border-top: 1px solid var(--hairline);
+  font-size: 11px;
+  color: var(--ink-muted-48);
+}
+
+/* ---------- Switch ---------- */
+.switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 8px;
+  user-select: none;
+}
+
+.switch.disabled {
+  opacity: 0.5;
+}
+
+.switch input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.switch-track {
+  position: relative;
+  width: 30px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--chip);
+  transition: background 0.15s;
+}
+
+.switch-track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s;
+}
+
+.switch input:checked + .switch-track {
+  background: var(--primary);
+}
+
+.switch input:checked + .switch-track::after {
+  transform: translateX(12px);
+}
+
+.switch input:focus-visible + .switch-track {
+  outline: 2px solid var(--primary-focus);
+  outline-offset: 1px;
+}

@@ -6,6 +6,8 @@ const paths = {
   "chevron-down": "M6 8l4 4 4-4",
   lock: "M6.5 9V7a3.5 3.5 0 0 1 7 0v2M5.5 9h9v7h-9z",
   doc: "M6 3.5h5l3.5 3.5v9.5h-8.5zM11 3.5V7h3.5",
+  undo: "M7.5 6.5L4.5 9.5l3 3M5 9.5h6.5a3.5 3.5 0 0 1 0 7H9",
+  redo: "M12.5 6.5l3 3-3 3M15 9.5H8.5a3.5 3.5 0 0 0 0 7H11",
 } as const;
 
 export type IconName = keyof typeof paths;

@@ -1,9 +1,11 @@
-import { classifyConfidence } from "../masking/thresholds";
+import { usePageMasks } from "../app/usePageMasks";
+import { effectiveTier } from "../masking/maskGenerator";
+import { useSettingsStore } from "../state/settingsStore";
 import { useDocumentStore } from "../state/documentStore";
 import { usePageContentStore, type PageContent } from "../state/pageContentStore";
 import { useViewerStore } from "../state/viewerStore";
 
-/** Document + page list. Detection counts and results are added in Phase E. */
+/** Document + page list with per-page mask counts. Results list and totals come in Phase E. */
 export function Sidebar() {
   const fileName = useDocumentStore((s) => s.fileName);
   const pageCount = useDocumentStore((s) => s.pageCount);
@@ -36,7 +38,7 @@ export function Sidebar() {
                 aria-current={i === currentPage ? "page" : undefined}
               >
                 <span>Page {i + 1}</span>
-                <PageStatus page={pages[i]} />
+                <PageStatus page={pages[i]} pageIndex={i} />
               </button>
             </li>
           ))}
@@ -46,15 +48,23 @@ export function Sidebar() {
   );
 }
 
-function PageStatus({ page }: { page: PageContent | undefined }) {
+function PageStatus({ page, pageIndex }: { page: PageContent | undefined; pageIndex: number }) {
   if (!page || page.state === "pending") return <span className="page-status muted">·</span>;
   if (page.state === "extracting" || page.state === "detecting") {
     return <span className="page-status spinner" aria-label="Analyzing" />;
   }
   if (page.state === "error") return <span className="page-status error">Error</span>;
   if (page.noTextLayer) return <span className="page-status muted" title="No text layer (scanned?)">No text</span>;
-  const detected = page.detections.filter((d) => classifyConfidence(d.confidence) === "auto").length;
-  const uncertain = page.detections.filter((d) => classifyConfidence(d.confidence) === "uncertain").length;
+  return <MaskCount pageIndex={pageIndex} />;
+}
+
+/** Counts reflect current thresholds and user decisions (ignored / confirmed / manual). */
+function MaskCount({ pageIndex }: { pageIndex: number }) {
+  const masks = usePageMasks(pageIndex);
+  const thresholds = useSettingsStore((s) => s.thresholds);
+  const tiers = masks.map((m) => effectiveTier(m, thresholds));
+  const detected = tiers.filter((t) => t === "auto").length;
+  const uncertain = tiers.filter((t) => t === "uncertain").length;
   return (
     <span className="page-status count" title={`${detected} Vietnamese, ${uncertain} uncertain`}>
       {detected}

@@ -22,6 +22,17 @@ describe("resolveShortcut", () => {
     expect(resolveShortcut(key("d", { metaKey: true }))).toBeNull();
   });
 
+  it("toggles masks with Ctrl/Cmd+Shift+M", () => {
+    expect(resolveShortcut(key("M", { ctrlKey: true, shiftKey: true }))).toBe("toggle-masks");
+  });
+
+  it("maps undo/redo but leaves text fields alone", () => {
+    expect(resolveShortcut(key("z", { ctrlKey: true }))).toBe("undo");
+    expect(resolveShortcut(key("Z", { metaKey: true, shiftKey: true }))).toBe("redo");
+    expect(resolveShortcut(key("y", { ctrlKey: true }))).toBe("redo");
+    expect(resolveShortcut(key("z", { ctrlKey: true, inTextField: true }))).toBeNull();
+  });
+
   it("maps zoom keys", () => {
     expect(resolveShortcut(key("=", { ctrlKey: true }))).toBe("zoom-in");
     expect(resolveShortcut(key("+", { ctrlKey: true, shiftKey: true }))).toBe("zoom-in");

@@ -5,7 +5,10 @@ export type ShortcutAction =
   | "fit-page"
   | "prev-page"
   | "next-page"
-  | "toggle-debug";
+  | "toggle-debug"
+  | "toggle-masks"
+  | "undo"
+  | "redo";
 
 export interface KeyInput {
   key: string;
@@ -24,6 +27,10 @@ export function resolveShortcut(e: KeyInput): ShortcutAction | null {
     const key = e.key.toLowerCase();
     if (key === "o" && !e.shiftKey) return "open";
     if (key === "d" && e.shiftKey) return "toggle-debug";
+    if (key === "m" && e.shiftKey) return "toggle-masks";
+    // Text fields keep their native undo.
+    if (key === "z" && !e.inTextField) return e.shiftKey ? "redo" : "undo";
+    if (key === "y" && !e.shiftKey && !e.inTextField) return "redo";
     if (key === "=" || key === "+") return "zoom-in";
     if (key === "-" || key === "_") return "zoom-out";
     if (key === "0" && !e.shiftKey) return "fit-page";

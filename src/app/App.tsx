@@ -2,12 +2,14 @@ import { useCallback, useEffect, useState } from "react";
 import { DebugPanel } from "../components/DebugPanel";
 import { ErrorDialog, PasswordDialog } from "../components/Dialogs";
 import { EmptyState } from "../components/EmptyState";
+import { MaskInspector } from "../components/MaskInspector";
 import { PdfViewer } from "../components/PdfViewer";
 import { Sidebar } from "../components/Sidebar";
 import { Toolbar } from "../components/Toolbar";
 import { onPdfDrop, pickPdf, type OpenedFile } from "../platform/fileIO";
 import { useDebugStore } from "../state/debugStore";
 import { useDocumentStore } from "../state/documentStore";
+import { useMaskStore } from "../state/maskStore";
 import { useViewerStore } from "../state/viewerStore";
 import { log } from "./log";
 import { resolveShortcut } from "./shortcuts";
@@ -20,6 +22,7 @@ export function App() {
 
   const openFile = useCallback((file: Promise<OpenedFile> | OpenedFile) => {
     useViewerStore.getState().reset();
+    useMaskStore.getState().reset();
     void useDocumentStore.getState().openFile(file);
   }, []);
 
@@ -64,6 +67,15 @@ export function App() {
         case "toggle-debug":
           useDebugStore.getState().toggle();
           break;
+        case "toggle-masks":
+          useMaskStore.getState().toggleMasks();
+          break;
+        case "undo":
+          useMaskStore.getState().undo();
+          break;
+        case "redo":
+          useMaskStore.getState().redo();
+          break;
         case "zoom-in":
           viewer.zoomStep(1);
           break;
@@ -97,6 +109,7 @@ export function App() {
         </main>
       </div>
       {dropHover && <div className="drop-overlay">Drop PDF to open</div>}
+      {hasDocument && <MaskInspector />}
       {hasDocument && <DebugPanel />}
       {status === "password" && <PasswordDialog />}
       <ErrorDialog />

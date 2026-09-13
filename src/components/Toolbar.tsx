@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useDocumentStore } from "../state/documentStore";
+import { selectCanRedo, selectCanUndo, useMaskStore } from "../state/maskStore";
 import { useViewerStore } from "../state/viewerStore";
 import { Icon } from "./Icon";
 
@@ -14,6 +15,10 @@ export function Toolbar({ onOpen }: ToolbarProps) {
   const fitMode = useViewerStore((s) => s.fitMode);
   const currentPage = useViewerStore((s) => s.currentPage);
   const { zoomStep, setFitMode, goToPage } = useViewerStore.getState();
+  const masksEnabled = useMaskStore((s) => s.masksEnabled);
+  const canUndo = useMaskStore(selectCanUndo);
+  const canRedo = useMaskStore(selectCanRedo);
+  const { toggleMasks, undo, redo } = useMaskStore.getState();
 
   return (
     <header className="toolbar">
@@ -80,6 +85,27 @@ export function Toolbar({ onOpen }: ToolbarProps) {
       </div>
 
       <div className="toolbar-spacer" />
+
+      <div className="toolbar-group">
+        <button className="btn-icon" disabled={!ready || !canUndo} onClick={undo} title="Undo (Ctrl+Z)" aria-label="Undo">
+          <Icon name="undo" />
+        </button>
+        <button className="btn-icon" disabled={!ready || !canRedo} onClick={redo} title="Redo (Ctrl+Shift+Z)" aria-label="Redo">
+          <Icon name="redo" />
+        </button>
+        <label className={`switch ${!ready ? "disabled" : ""}`} title="Toggle Vietnamese masks (Ctrl+Shift+M)">
+          <span>Hide Vietnamese</span>
+          <input
+            type="checkbox"
+            role="switch"
+            checked={masksEnabled}
+            disabled={!ready}
+            onChange={toggleMasks}
+            aria-label="Vietnamese masking"
+          />
+          <span className="switch-track" aria-hidden />
+        </label>
+      </div>
     </header>
   );
 }
