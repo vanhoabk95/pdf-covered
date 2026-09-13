@@ -44,8 +44,10 @@ src/
               languageDetector (franc, supporting evidence only), vietnameseDetector (weights),
               registry (ACTIVE_DETECTORS), labelledLines (evaluation sets), types (LineDetector)
   masking/    thresholds, maskGenerator (pad + clip), pageMasks (resolve with decisions), history (undo)
-  export/     redactPdf, validateRedaction
-  workers/    detection.worker.ts + detectionClient (plain postMessage RPC, inline fallback), export.worker.ts
+  export/     plan (what to redact, readiness), redactPdf (mupdf + sanitize), validateRedaction
+              (mupdf chars + pixels), validateWithPdfjs, exportDocument (worker orchestration)
+  workers/    detection.worker.ts + detectionClient (plain postMessage RPC, inline fallback),
+              export.worker.ts (MuPDF; waits for a "ready" handshake — mupdf uses top-level await)
   state/      documentStore, viewerStore, pageContentStore, maskStore (decisions + undo), settingsStore, debugStore
   components/ PdfViewer, PdfPage, MaskOverlay, MaskInspector, DebugOverlay/Panel, Toolbar, Sidebar
   platform/   fileIO adapter (Tauri vs browser)
@@ -96,6 +98,18 @@ tests/        integration + e2e
   excluded). Phase F export must use exactly this predicate.
 - `tests/e2e/masking.spec.ts` measures canvas ink: >99% of Vietnamese-line ink under solid masks,
   <1% of other lines' ink, across zoom levels and window sizes.
+
+## Export (Phase F)
+- Flow: pick save path → export worker: `redactPdf` + `validateWithMupdf` → main thread:
+  `validateWithPdfjs` → only if 0 leaks, Rust `write_pdf_file` (raw body, `x-path` header, writes a
+  `.partial` file then renames). Validation failure = no file.
+- Coordinates: `toPageRect(box, page.getTransform())` — never hand-roll MuPDF page space.
+- Sanitization removes Info, XMP, outlines, AcroForm, Names, StructTreeRoot/MarkInfo, page Annots/
+  Thumb/PieceInfo. Save options: `decrypt,garbage=deduplicate,compress,clean,sanitize`.
+- Export is blocked until every page is analyzed; failed pages block; scanned pages without OCR
+  require explicit acknowledgement.
+- Playwright's Node side can't load the modern pdfjs build (needs `Uint8Array.toHex`); in e2e,
+  check downloaded files with mupdf.
 
 ## Testing
 - Pure functions get unit tests next to them (`*.test.ts`). Node tests alias `pdfjs-dist` to the

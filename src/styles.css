@@ -1012,3 +1012,66 @@ input:focus-visible {
   margin-top: 2px;
   accent-color: var(--primary);
 }
+
+/* ---------- Export ---------- */
+.modal.export {
+  width: 460px;
+  text-align: left;
+}
+
+.export-explain {
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--parchment);
+}
+
+.export-explain p {
+  margin: 0;
+}
+
+.export-explain p + p {
+  margin-top: 6px;
+}
+
+.export-summary {
+  margin: 12px 0 6px;
+}
+
+.export-summary dd {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.export-warning {
+  margin: 8px 0;
+  padding: 6px 8px;
+  border-radius: var(--radius-xs);
+  background: rgba(255, 159, 10, 0.14);
+  color: #8a4b00;
+}
+
+.export-warning.error {
+  background: rgba(215, 0, 21, 0.08);
+  color: var(--danger);
+}
+
+.export-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 0;
+}
+
+.export-success {
+  margin: 8px 0;
+  font-weight: 600;
+  color: #1d7d32;
+}
+
+.leak-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+}

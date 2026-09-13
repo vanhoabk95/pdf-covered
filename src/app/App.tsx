@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { DebugPanel } from "../components/DebugPanel";
 import { ErrorDialog, PasswordDialog } from "../components/Dialogs";
 import { EmptyState } from "../components/EmptyState";
+import { ExportDialog } from "../components/ExportDialog";
 import { MaskInspector } from "../components/MaskInspector";
 import { PdfViewer } from "../components/PdfViewer";
 import { SettingsDialog } from "../components/SettingsDialog";
@@ -21,6 +22,7 @@ export function App() {
   const status = useDocumentStore((s) => s.status);
   const [dropHover, setDropHover] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
   useDocumentProcessing();
 
   const openFile = useCallback((file: Promise<OpenedFile> | OpenedFile) => {
@@ -74,6 +76,9 @@ export function App() {
         case "toggle-debug":
           useDebugStore.getState().toggle();
           break;
+        case "export":
+          setExportOpen(true);
+          break;
         case "toggle-masks":
           useMaskStore.getState().toggleMasks();
           break;
@@ -108,7 +113,7 @@ export function App() {
 
   return (
     <div className="app">
-      <Toolbar onOpen={openDialog} onOpenSettings={() => setSettingsOpen(true)} />
+      <Toolbar onOpen={openDialog} onOpenSettings={() => setSettingsOpen(true)} onExport={() => setExportOpen(true)} />
       <div className="app-body">
         {hasDocument && <Sidebar onStartDetection={() => usePageContentStore.getState().start()} />}
         <main className="viewer">
@@ -119,6 +124,7 @@ export function App() {
       {hasDocument && <MaskInspector />}
       {hasDocument && <DebugPanel />}
       {settingsOpen && <SettingsDialog onClose={() => setSettingsOpen(false)} />}
+      {exportOpen && hasDocument && <ExportDialog onClose={() => setExportOpen(false)} />}
       {status === "password" && <PasswordDialog />}
       <ErrorDialog />
     </div>

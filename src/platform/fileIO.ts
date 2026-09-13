@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { open } from "@tauri-apps/plugin-dialog";
+import { open, save } from "@tauri-apps/plugin-dialog";
 
 export interface OpenedFile {
   name: string;
@@ -97,4 +97,26 @@ export async function onPdfDrop(
     window.removeEventListener("dragleave", leave);
     window.removeEventListener("drop", drop);
   };
+}
+
+/** Asks where to save the redacted PDF. Resolves null when cancelled. In the browser, returns the name. */
+export async function pickSavePath(defaultName: string): Promise<string | null> {
+  if (!isTauri()) return defaultName;
+  const path = await save({ defaultPath: defaultName, filters: [{ name: "PDF", extensions: ["pdf"] }] });
+  if (!path) return null;
+  return /\.pdf$/i.test(path) ? path : `${path}.pdf`;
+}
+
+/** Writes an exported PDF. Tauri: raw bytes to the chosen path. Browser (dev): triggers a download. */
+export async function writePdf(pathOrName: string, bytes: Uint8Array): Promise<void> {
+  if (isTauri()) {
+    await invoke("write_pdf_file", bytes, { headers: { "x-path": encodeURIComponent(pathOrName) } });
+    return;
+  }
+  const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: "application/pdf" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileNameFromPath(pathOrName);
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }

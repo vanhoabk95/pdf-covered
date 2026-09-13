@@ -22,6 +22,10 @@ describe("resolveShortcut", () => {
     expect(resolveShortcut(key("d", { metaKey: true }))).toBeNull();
   });
 
+  it("opens export with Ctrl/Cmd+E", () => {
+    expect(resolveShortcut(key("e", { ctrlKey: true }))).toBe("export");
+  });
+
   it("toggles masks with Ctrl/Cmd+Shift+M", () => {
     expect(resolveShortcut(key("M", { ctrlKey: true, shiftKey: true }))).toBe("toggle-masks");
   });

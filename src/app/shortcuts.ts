@@ -8,7 +8,8 @@ export type ShortcutAction =
   | "toggle-debug"
   | "toggle-masks"
   | "undo"
-  | "redo";
+  | "redo"
+  | "export";
 
 export interface KeyInput {
   key: string;
@@ -26,6 +27,7 @@ export function resolveShortcut(e: KeyInput): ShortcutAction | null {
   if (mod && !e.altKey) {
     const key = e.key.toLowerCase();
     if (key === "o" && !e.shiftKey) return "open";
+    if (key === "e" && !e.shiftKey) return "export";
     if (key === "d" && e.shiftKey) return "toggle-debug";
     if (key === "m" && e.shiftKey) return "toggle-masks";
     // Text fields keep their native undo.

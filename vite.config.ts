@@ -8,7 +8,10 @@ const host = process.env.TAURI_DEV_HOST;
 // https://vite.dev/config/
 export default defineConfig(() => ({
   plugins: [react()],
-  build: { chunkSizeWarningLimit: 2000 },
+  // MuPDF's WASM loader uses top-level await: keep ES module output for app and workers.
+  build: { chunkSizeWarningLimit: 16000, target: "es2022" },
+  worker: { format: "es" as const },
+  optimizeDeps: { exclude: ["mupdf"] },
 
   // Tauri: don't obscure Rust errors; fixed dev port.
   clearScreen: false,
