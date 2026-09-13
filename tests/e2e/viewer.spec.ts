@@ -30,7 +30,7 @@ test("opens a multi-page PDF and renders pages", async ({ page }) => {
   await expect(page.locator('.pdf-page[data-page-index="5"]')).toHaveCount(0);
 
   // Navigate to the rotated page: it is laid out landscape.
-  await page.getByRole("button", { name: "Page 4", exact: true }).click();
+  await page.getByRole("button", { name: /^Page 4\b/ }).click();
   await expect(page.locator('.pdf-page[data-page-index="3"] canvas')).toBeVisible();
   const rotated = await pageBox(page, 3);
   expect(rotated!.width).toBeGreaterThan(rotated!.height);

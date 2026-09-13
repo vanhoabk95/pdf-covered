@@ -540,3 +540,44 @@ input:focus-visible {
   margin: 0;
   font-variant-numeric: tabular-nums;
 }
+
+.page-status.count {
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-muted-48);
+}
+
+.page-status-uncertain {
+  color: #b25000;
+}
+
+.page-row.active .page-status-uncertain {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Debug tiers: auto = red, uncertain = amber, none = gray */
+.debug-tier-auto .debug-line {
+  stroke: rgb(215, 0, 21);
+  stroke-dasharray: none;
+  stroke-width: 1.5;
+}
+
+.debug-tier-auto .debug-label {
+  fill: rgb(215, 0, 21);
+}
+
+.debug-tier-uncertain .debug-line {
+  stroke: rgb(230, 130, 0);
+  stroke-width: 1.5;
+}
+
+.debug-tier-uncertain .debug-label {
+  fill: rgb(190, 100, 0);
+}
+
+.debug-tier-none .debug-line {
+  stroke: rgba(120, 120, 128, 0.8);
+}
+
+.debug-tier-none .debug-label {
+  fill: rgb(100, 100, 108);
+}

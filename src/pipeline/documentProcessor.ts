@@ -1,7 +1,9 @@
 import type { PDFPageProxy } from "pdfjs-dist";
 import { elapsedMs, log } from "../app/log";
+import type { DetectableLine, DetectionResult } from "../detection/types";
 import { groupLines } from "../grouping/lineGrouper";
 import type { TextLine } from "../grouping/types";
+import { classifyConfidence } from "../masking/thresholds";
 import { extractPageText } from "../pdf/textExtractor";
 import type { PdfTextItem } from "../pdf/types";
 import { nextPageToProcess, type PageProcessingState } from "./processingQueue";
@@ -10,10 +12,11 @@ export interface PageContentUpdate {
   state: PageProcessingState;
   items?: PdfTextItem[];
   lines?: TextLine[];
+  detections?: DetectionResult[];
   /** No extractable text: candidate for OCR (spec §22). */
   noTextLayer?: boolean;
   error?: string;
-  timings?: { extractMs: number; groupMs: number };
+  timings?: { extractMs: number; groupMs: number; detectMs: number };
 }
 
 export interface DocumentProcessorDeps {
@@ -21,6 +24,8 @@ export interface DocumentProcessorDeps {
   getPage(pageIndex: number): Promise<PDFPageProxy>;
   getCurrentPage(): number;
   onPageUpdate(pageIndex: number, update: PageContentUpdate): void;
+  /** Runs detectors on the page's lines (usually in a worker). Omit to skip detection. */
+  detectLines?(lines: DetectableLine[]): Promise<DetectionResult[]>;
   /** Lets the UI breathe between pages. Defaults to a macrotask. */
   yieldToUi?: () => Promise<void>;
 }
@@ -35,7 +40,7 @@ const macrotask = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 /**
  * Processes pages one at a time in priority order, re-evaluating the current page after
  * each one so jumping around the document reprioritizes remaining work.
- * Detection (Phase C) plugs in after grouping.
+ * Stages per page: extracting → detecting → ready (or error).
  */
 export function startDocumentProcessing(deps: DocumentProcessorDeps): ProcessingHandle {
   const states: PageProcessingState[] = Array(deps.pageCount).fill("pending");
@@ -61,20 +66,34 @@ export function startDocumentProcessing(deps: DocumentProcessorDeps): Processing
         const lines = groupLines(items);
         const groupMs = elapsedMs(t1);
 
+        states[pageIndex] = "detecting";
+        deps.onPageUpdate(pageIndex, { state: "detecting", items, lines, noTextLayer: items.length === 0 });
+
+        const t2 = performance.now();
+        const detections =
+          deps.detectLines && lines.length ? await deps.detectLines(lines.map((l) => ({ id: l.id, text: l.text }))) : [];
+        const detectMs = elapsedMs(t2);
+        if (cancelled) return;
+
         states[pageIndex] = "ready";
         deps.onPageUpdate(pageIndex, {
           state: "ready",
           items,
           lines,
+          detections,
           noTextLayer: items.length === 0,
-          timings: { extractMs, groupMs },
+          timings: { extractMs, groupMs, detectMs },
         });
-        log.info("page extracted", {
+        const tiers = detections.map((d) => classifyConfidence(d.confidence));
+        log.info("page processed", {
           page: pageIndex + 1,
           items: items.length,
           lines: lines.length,
+          detected: tiers.filter((t) => t === "auto").length,
+          uncertain: tiers.filter((t) => t === "uncertain").length,
           extractMs,
           groupMs,
+          detectMs,
         });
       } catch (err) {
         if (cancelled) return;

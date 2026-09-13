@@ -1,3 +1,4 @@
+import { classifyConfidence } from "../masking/thresholds";
 import { useDebugStore, type DebugLayers } from "../state/debugStore";
 import { usePageContentStore } from "../state/pageContentStore";
 import { useViewerStore } from "../state/viewerStore";
@@ -5,6 +6,7 @@ import { useViewerStore } from "../state/viewerStore";
 const layerLabels: [keyof DebugLayers, string][] = [
   ["showItems", "Raw text boxes"],
   ["showLines", "Grouped line boxes"],
+  ["showConfidence", "Language confidence"],
   ["showLineText", "Line text"],
   ["showCoordinates", "PDF coordinates"],
 ];
@@ -14,6 +16,7 @@ export function DebugPanel() {
   const currentPage = useViewerStore((s) => s.currentPage);
   const page = usePageContentStore((s) => s.pages[currentPage]);
   if (!debug.enabled) return null;
+  const tiers = page?.detections.map((d) => classifyConfidence(d.confidence)) ?? [];
 
   return (
     <div className="debug-panel" role="region" aria-label="Debug">
@@ -39,11 +42,15 @@ export function DebugPanel() {
           <dd>{page.items.length}</dd>
           <dt>Lines</dt>
           <dd>{page.lines.length}</dd>
+          <dt>Vietnamese</dt>
+          <dd>{tiers.filter((t) => t === "auto").length}</dd>
+          <dt>Uncertain</dt>
+          <dd>{tiers.filter((t) => t === "uncertain").length}</dd>
           {page.timings && (
             <>
-              <dt>Extract / group</dt>
+              <dt>Extract / group / detect</dt>
               <dd>
-                {page.timings.extractMs} / {page.timings.groupMs} ms
+                {page.timings.extractMs} / {page.timings.groupMs} / {page.timings.detectMs} ms
               </dd>
             </>
           )}

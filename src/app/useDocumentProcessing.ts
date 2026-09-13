@@ -3,6 +3,7 @@ import { startDocumentProcessing } from "../pipeline/documentProcessor";
 import { useDocumentStore } from "../state/documentStore";
 import { usePageContentStore } from "../state/pageContentStore";
 import { useViewerStore } from "../state/viewerStore";
+import { createDetectionClient } from "../workers/detectionClient";
 
 /** Starts page processing whenever a document opens; cancels it when the document changes. */
 export function useDocumentProcessing(): void {
@@ -16,12 +17,17 @@ export function useDocumentProcessing(): void {
       return;
     }
     content.init(pageCount);
+    const detection = createDetectionClient();
     const handle = startDocumentProcessing({
       pageCount,
       getPage: (i) => pdf.getPage(i + 1),
       getCurrentPage: () => useViewerStore.getState().currentPage,
       onPageUpdate: (i, update) => usePageContentStore.getState().applyUpdate(i, update),
+      detectLines: (lines) => detection.detect(lines),
     });
-    return () => handle.cancel();
+    return () => {
+      handle.cancel();
+      detection.dispose();
+    };
   }, [pdf, pageCount]);
 }

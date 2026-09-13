@@ -78,7 +78,7 @@ test.describe("text extraction alignment", () => {
     await waitForSharpRender(page);
     expect((await inkInsideLineBoxes(page, 0)).fraction).toBeGreaterThan(0.99);
 
-    await page.getByRole("button", { name: "Page 2", exact: true }).click();
+    await page.getByRole("button", { name: /^Page 2\b/ }).click();
     await expect(page.locator('.pdf-page[data-page-index="1"] .debug-line')).toHaveCount(3);
     await waitForSharpRender(page);
     expect((await inkInsideLineBoxes(page, 1)).fraction).toBeGreaterThan(0.99);

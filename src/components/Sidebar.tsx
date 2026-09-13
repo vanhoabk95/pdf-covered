@@ -1,3 +1,4 @@
+import { classifyConfidence } from "../masking/thresholds";
 import { useDocumentStore } from "../state/documentStore";
 import { usePageContentStore, type PageContent } from "../state/pageContentStore";
 import { useViewerStore } from "../state/viewerStore";
@@ -52,5 +53,12 @@ function PageStatus({ page }: { page: PageContent | undefined }) {
   }
   if (page.state === "error") return <span className="page-status error">Error</span>;
   if (page.noTextLayer) return <span className="page-status muted" title="No text layer (scanned?)">No text</span>;
-  return null;
+  const detected = page.detections.filter((d) => classifyConfidence(d.confidence) === "auto").length;
+  const uncertain = page.detections.filter((d) => classifyConfidence(d.confidence) === "uncertain").length;
+  return (
+    <span className="page-status count" title={`${detected} Vietnamese, ${uncertain} uncertain`}>
+      {detected}
+      {uncertain > 0 && <span className="page-status-uncertain"> +{uncertain}?</span>}
+    </span>
+  );
 }

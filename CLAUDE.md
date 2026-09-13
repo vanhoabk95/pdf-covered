@@ -13,7 +13,7 @@ Visual language: DESIGN.md (adapt to a compact desktop UI).
   render with `page.render({ canvas, viewport })`. Runtime assets (cmaps, fonts, wasm) are copied
   to `public/pdfjs` by `scripts/copy-pdfjs-assets.mjs` (predev/prebuild) — never load from a CDN.
 - mupdf (WASM, AGPL-3.0): redaction export + verification, runs in a worker
-- franc-min (MIT) + custom heuristics: language detection, runs in a worker
+- franc-min (MIT) + custom heuristics: language detection, runs in `workers/detection.worker.ts`
 - Vitest (unit/integration, Node), Playwright (UI alignment tests against Vite dev server)
 
 ## Commands
@@ -40,10 +40,12 @@ src/
   pdf/        pdfLoader, textExtractor, coordinateTransform (ONLY place doing PDF↔viewport math)
   grouping/   lineGrouper (angle bucket → baseline band → split at gaps), bbox utils
   pipeline/   documentProcessor, processingQueue
-  detection/  heuristics, languageDetector (franc wrapper), vietnameseDetector, types (Detector interface)
-  masking/    maskGenerator, maskStore, thresholds
+  detection/  syllables (Vietnamese onset+rhyme+tone validator), heuristics (signals, names),
+              languageDetector (franc, supporting evidence only), vietnameseDetector (weights),
+              registry (ACTIVE_DETECTORS), labelledLines (evaluation sets), types (LineDetector)
+  masking/    thresholds (classifyConfidence), maskGenerator, maskStore
   export/     redactPdf, validateRedaction
-  workers/    detection.worker.ts, export.worker.ts (Comlink)
+  workers/    detection.worker.ts + detectionClient (plain postMessage RPC, inline fallback), export.worker.ts
   state/      documentStore, viewerStore, pageContentStore, debugStore, settingsStore
   components/ PdfViewer, PdfPage, MaskOverlay, DebugOverlay, Toolbar, DetectionSidebar, MaskInspector
   platform/   fileIO adapter (Tauri vs browser)
@@ -73,6 +75,17 @@ tests/        integration + e2e
 9. Logging: counts and timings only — never log document text (debug mode is opt-in).
 10. Heavy work off the main thread; process pages by priority (current, next, prev, rest).
 11. No PDF parsing / detection / coordinate math inside React components.
+
+## Vietnamese detection
+- Main evidence = diacritic tokens that are *valid Vietnamese syllables* and not part of a
+  person/place name. franc is unreliable on short/mixed lines ("Kiểm tra gamma value" → por),
+  so it only nudges the score. Text without diacritics is capped at 0.78 (never auto-masked);
+  name-only lines are capped at 0.70.
+- Weights live in `WEIGHTS` (vietnameseDetector.ts). Any change must keep
+  `LABELLED_LINES` and `HOLDOUT_LINES` green; add new failure cases to `LABELLED_LINES` first.
+  Don't tune against `HOLDOUT_LINES`.
+- Known issue for masking (Phase D): with tight leading (e.g. Courier from Quartz), line boxes
+  built from font ascent/descent overlap adjacent lines — masks must not cover visible neighbors.
 
 ## Testing
 - Pure functions get unit tests next to them (`*.test.ts`). Node tests alias `pdfjs-dist` to the

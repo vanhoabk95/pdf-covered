@@ -7,6 +7,7 @@ export interface DebugLayers {
   showItems: boolean;
   showLines: boolean;
   showLineText: boolean;
+  showConfidence: boolean;
   showCoordinates: boolean;
 }
 
@@ -20,7 +21,8 @@ export const useDebugStore = create<DebugState>((set) => ({
   enabled: false,
   showItems: true,
   showLines: true,
-  showLineText: true,
+  showLineText: false,
+  showConfidence: true,
   showCoordinates: false,
   toggle: () => set((s) => ({ enabled: DEBUG_AVAILABLE && !s.enabled })),
   setLayer: (layer, value) => set({ [layer]: value } as Pick<DebugLayers, typeof layer>),

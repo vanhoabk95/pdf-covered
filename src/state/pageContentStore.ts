@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import type { DetectionResult } from "../detection/types";
 import type { TextLine } from "../grouping/types";
 import type { PageContentUpdate } from "../pipeline/documentProcessor";
 import type { PageProcessingState } from "../pipeline/processingQueue";
@@ -8,9 +9,10 @@ export interface PageContent {
   state: PageProcessingState;
   items: PdfTextItem[];
   lines: TextLine[];
+  detections: DetectionResult[];
   noTextLayer: boolean;
   error?: string;
-  timings?: { extractMs: number; groupMs: number };
+  timings?: { extractMs: number; groupMs: number; detectMs: number };
 }
 
 interface PageContentState {
@@ -20,7 +22,7 @@ interface PageContentState {
   reset(): void;
 }
 
-const emptyPage = (): PageContent => ({ state: "pending", items: [], lines: [], noTextLayer: false });
+const emptyPage = (): PageContent => ({ state: "pending", items: [], lines: [], detections: [], noTextLayer: false });
 
 /** Per-page extraction results. Each page object is replaced on update, so selectors stay cheap. */
 export const usePageContentStore = create<PageContentState>((set) => ({
