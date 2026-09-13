@@ -13,6 +13,7 @@ import { useDebugStore } from "../state/debugStore";
 import { useDocumentStore } from "../state/documentStore";
 import { useMaskStore } from "../state/maskStore";
 import { usePageContentStore } from "../state/pageContentStore";
+import { useSessionDecisions } from "./useSessionDecisions";
 import { useViewerStore } from "../state/viewerStore";
 import { log } from "./log";
 import { resolveShortcut } from "./shortcuts";
@@ -24,10 +25,10 @@ export function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   useDocumentProcessing();
+  useSessionDecisions();
 
   const openFile = useCallback((file: Promise<OpenedFile> | OpenedFile) => {
     useViewerStore.getState().reset();
-    useMaskStore.getState().reset();
     void useDocumentStore.getState().openFile(file);
   }, []);
 

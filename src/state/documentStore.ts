@@ -4,6 +4,7 @@ import { elapsedMs, log } from "../app/log";
 import { destroyPdf, loadPdf, PdfLoadError, readPageGeometries, type PdfLoadErrorKind } from "../pdf/pdfLoader";
 import type { PageGeometry } from "../pdf/types";
 import type { OpenedFile } from "../platform/fileIO";
+import { sha256Hex } from "./sessionCache";
 
 export type DocumentStatus = "idle" | "loading" | "password" | "ready" | "error";
 
@@ -18,6 +19,8 @@ interface DocumentState {
   /** Original file bytes, kept for password retries and redacted export. */
   bytes: Uint8Array | null;
   pdf: PDFDocumentProxy | null;
+  /** SHA-256 of the file bytes (session cache key). */
+  documentHash: string | null;
   pageCount: number;
   geometries: PageGeometry[];
   error: DocumentError | null;
@@ -39,6 +42,7 @@ const emptyDocument = {
   fileName: null,
   bytes: null,
   pdf: null,
+  documentHash: null,
   pageCount: 0,
   geometries: [],
   error: null,
@@ -50,14 +54,14 @@ export const useDocumentStore = create<DocumentState>((set, get) => {
     const seq = ++loadSeq;
     const start = performance.now();
     try {
-      const { doc, pageCount } = await loadPdf(bytes, password);
+      const [{ doc, pageCount }, documentHash] = await Promise.all([loadPdf(bytes, password), sha256Hex(bytes)]);
       const geometries = await readPageGeometries(doc);
       if (seq !== loadSeq) {
         void destroyPdf(doc);
         return;
       }
       sessionPassword = password;
-      set({ status: "ready", pdf: doc, pageCount, geometries, passwordError: null, error: null });
+      set({ status: "ready", pdf: doc, documentHash, pageCount, geometries, passwordError: null, error: null });
       log.info("pdf loaded", { pages: pageCount, ms: elapsedMs(start) });
     } catch (err) {
       if (seq !== loadSeq) return;

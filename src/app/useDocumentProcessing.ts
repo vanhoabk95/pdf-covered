@@ -4,6 +4,7 @@ import { getAppOcrEngine, recognizePdfjsPage } from "../ocr/pageOcr";
 import { startDocumentProcessing } from "../pipeline/documentProcessor";
 import { useDocumentStore } from "../state/documentStore";
 import { usePageContentStore } from "../state/pageContentStore";
+import { getCachedAnalysis, storeAnalysis } from "../state/sessionCache";
 import { useSettingsStore } from "../state/settingsStore";
 import { useViewerStore } from "../state/viewerStore";
 import { createDetectionClient } from "../workers/detectionClient";
@@ -14,6 +15,7 @@ const ocrCache = new Map<number, TextLine[]>();
 /** Starts page processing whenever a document opens; cancels it when the document changes. */
 export function useDocumentProcessing(): void {
   const pdf = useDocumentStore((s) => s.pdf);
+  const documentHash = useDocumentStore((s) => s.documentHash);
   const pageCount = useDocumentStore((s) => s.pageCount);
   const started = usePageContentStore((s) => s.started);
   const ocrEnabled = useSettingsStore((s) => s.ocrEnabled);
@@ -30,6 +32,15 @@ export function useDocumentProcessing(): void {
   useEffect(() => {
     // Read the store directly: `started` from this render may still belong to the previous document.
     if (!pdf || !started || !usePageContentStore.getState().started) return;
+
+    // Same file analyzed earlier this session with the same OCR setting: reuse the results.
+    const cached = documentHash ? getCachedAnalysis(documentHash, ocrEnabled) : undefined;
+    if (cached && cached.length === pageCount) {
+      const content = usePageContentStore.getState();
+      cached.forEach((page, i) => content.applyUpdate(i, page));
+      return;
+    }
+
     const detection = createDetectionClient();
     const handle = startDocumentProcessing({
       pageCount,
@@ -49,9 +60,17 @@ export function useDocumentProcessing(): void {
         },
       },
     });
+    let cancelled = false;
+    void handle.done.then(() => {
+      const pages = usePageContentStore.getState().pages;
+      if (!cancelled && documentHash && pages.every((p) => p.state === "ready")) {
+        storeAnalysis(documentHash, ocrEnabled, pages);
+      }
+    });
     return () => {
+      cancelled = true;
       handle.cancel();
       detection.dispose();
     };
-  }, [pdf, pageCount, started, ocrEnabled]);
+  }, [pdf, documentHash, pageCount, started, ocrEnabled]);
 }

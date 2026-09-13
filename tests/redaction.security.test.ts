@@ -6,7 +6,8 @@ import { redactPdf } from "../src/export/redactPdf";
 import type { RedactionRegion } from "../src/export/types";
 import { mergeReports, validateWithMupdf } from "../src/export/validateRedaction";
 import { extractAllText, validateWithPdfjs } from "../src/export/validateWithPdfjs";
-import { buildFixture } from "./helpers/fixtures";
+import { ExportError } from "../src/export/types";
+import { buildFixture, FIXTURE_PASSWORD } from "./helpers/fixtures";
 import { analyzeDocument } from "./helpers/pipeline";
 
 /**
@@ -144,6 +145,22 @@ describe("redaction security (spec §51)", () => {
     expect(reloaded.getSubject()).toBeUndefined();
     expect(reloaded.getKeywords()).toBeUndefined();
     expect(report.removed.join(" ")).toMatch(/Document information/);
+  });
+
+  it("password-protected input: redacts with the session password; output opens without one", async () => {
+    const input = await buildFixture("password-protected");
+    const regions: RedactionRegion[] = [
+      { pageIndex: 0, bbox: { x: 68, y: 678, width: 300, height: 20 }, sourceText: "Mục tiêu của dự án là cải thiện hệ thống." },
+    ];
+    expect(() => redactPdf({ bytes: input, regions })).toThrow(ExportError);
+
+    const { bytes } = redactPdf({ bytes: input, password: FIXTURE_PASSWORD, regions });
+    const reopened = mupdf.Document.openDocument(bytes, "application/pdf");
+    expect(reopened.needsPassword()).toBe(false);
+    const text = squash(mupdfText(bytes));
+    expect(text).not.toContain(squash("Mục tiêu"));
+    expect(text).toContain(squash("Target luminance"));
+    expect(validateWithMupdf(bytes, regions).ok).toBe(true);
   });
 
   it("output is a full rewrite, not an incremental update", async () => {

@@ -21,7 +21,8 @@ export function Sidebar({ onStartDetection }: { onStartDetection(): void }) {
 
   const processed = pages.filter((p) => p.state === "ready" || p.state === "error").length;
   const analyzing = detectionStarted && processed < pageCount;
-  const noTextPages = pages.filter((p) => p.state === "ready" && p.noTextLayer && !p.ocr).length;
+  const noTextPages = pages.filter((p) => p.state === "ready" && p.noTextLayer && !p.ocr && !p.ocrError).length;
+  const ocrFailedPages = pages.filter((p) => p.state === "ready" && p.ocrError).length;
 
   return (
     <aside className="sidebar" aria-label="Document sidebar">
@@ -61,6 +62,12 @@ export function Sidebar({ onStartDetection }: { onStartDetection(): void }) {
           <p className="sidebar-warning">
             {noTextPages} {noTextPages === 1 ? "page has" : "pages have"} no text layer and {noTextPages === 1 ? "was" : "were"} not
             analyzed. Enable OCR in Settings to scan them.
+          </p>
+        )}
+        {ocrFailedPages > 0 && (
+          <p className="sidebar-warning" role="alert">
+            OCR failed on {ocrFailedPages} {ocrFailedPages === 1 ? "page" : "pages"}. Their content was not analyzed; use
+            manual masks there.
           </p>
         )}
       </section>
@@ -115,6 +122,13 @@ function PageStatus({ page, masks }: { page: PageContent | undefined; masks: Res
     return <span className="page-status spinner" aria-label={page.state === "ocr" ? "Running OCR" : "Analyzing"} />;
   }
   if (page.state === "error") return <span className="page-status error">Error</span>;
+  if (page.ocrError) {
+    return (
+      <span className="page-status error" title={page.ocrError}>
+        OCR failed
+      </span>
+    );
+  }
   if (page.noTextLayer && !page.ocr) {
     return (
       <span className="page-status muted" title="No text layer (scanned?)">

@@ -38,6 +38,8 @@ interface MaskState {
   openInspector(target: InspectorTarget): void;
   closeInspector(): void;
   flash(key: string): void;
+  /** Restores decisions from the session cache as a fresh history (not undoable). */
+  restoreDecisions(decisions: MaskDecisions): void;
   reset(): void;
 }
 
@@ -92,6 +94,8 @@ export const useMaskStore = create<MaskState>((set, get) => {
         if (get().highlightKey === key) set({ highlightKey: null });
       }, 1600);
     },
+
+    restoreDecisions: (decisions) => set({ history: createHistory(decisions) }),
 
     reset: () =>
       set({ masksEnabled: true, history: createHistory(emptyDecisions), revealed: {}, inspector: null, highlightKey: null }),

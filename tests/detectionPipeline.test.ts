@@ -23,7 +23,7 @@ async function processFixture(name: string) {
 }
 
 describe("detection pipeline on fixtures (ground truth per line)", () => {
-  it.each(listFixtures().filter((f) => !f.scanDpi).map((f) => [f.name, f] as const))("%s", async (_name, fixture) => {
+  it.each(listFixtures().filter((f) => !f.scanDpi && !f.password).map((f) => [f.name, f] as const))("%s", async (_name, fixture) => {
     const pages = await processFixture(fixture.name);
     fixture.pages.forEach((spec, pageIndex) => {
       const page = pages.get(pageIndex)!;

@@ -1075,3 +1075,55 @@ input:focus-visible {
   padding-left: 18px;
   font-size: 12px;
 }
+
+/* ---------- Narrow windows ---------- */
+.toolbar {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.toolbar::-webkit-scrollbar {
+  display: none;
+}
+
+.toolbar button,
+.toolbar label,
+.toolbar .page-input {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+@media (max-width: 1180px) {
+  .check-label {
+    font-size: 0;
+    gap: 0;
+  }
+}
+
+@media (max-width: 1080px) {
+  .sidebar {
+    width: 200px;
+  }
+  .segmented button {
+    padding: 0 7px;
+  }
+  .select-label select {
+    max-width: 96px;
+  }
+}
+
+.label-short {
+  display: none;
+}
+
+@media (max-width: 1080px) {
+  .label-long {
+    display: none;
+  }
+  .label-short {
+    display: inline;
+  }
+  .toolbar {
+    gap: 8px;
+  }
+}

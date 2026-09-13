@@ -38,7 +38,11 @@ export interface Fixture {
   pages: FixturePage[];
   /** Rasterize every page into an image-only page at this resolution (simulated scan). */
   scanDpi?: number;
+  /** Encrypt with AES-256 using this user password. */
+  password?: string;
 }
+
+export const FIXTURE_PASSWORD = "mật-khẩu-123";
 
 const FONT_DIR = new URL("../fonts/", import.meta.url);
 const L = 72;
@@ -169,6 +173,19 @@ const fixtures: Fixture[] = [
     ],
   },
   {
+    name: "password-protected",
+    password: FIXTURE_PASSWORD,
+    pages: [
+      {
+        lines: [
+          { text: "Confidential Report", x: L, y: 720, size: 20, bold: true, vi: false },
+          { text: "Mục tiêu của dự án là cải thiện hệ thống.", x: L, y: 684, vi: true },
+          { text: "Target luminance: 500 nit", x: L, y: 660, vi: false },
+        ],
+      },
+    ],
+  },
+  {
     name: "scanned-page",
     pages: [
       { lines: [{ text: "Cover page with a text layer", x: L, y: 720, vi: false }] },
@@ -211,8 +228,16 @@ export async function buildFixture(fixture: Fixture | string): Promise<Uint8Arra
       page.drawImage(png, { x: 56, y: 100, width: 500, height: 650 });
     }
   }
-  const bytes = await doc.save({ useObjectStreams: false });
-  return spec.scanDpi ? rasterize(bytes, spec.scanDpi) : bytes;
+  let bytes = await doc.save({ useObjectStreams: false });
+  if (spec.scanDpi) bytes = await rasterize(bytes, spec.scanDpi);
+  if (spec.password) bytes = encrypt(bytes, spec.password);
+  return bytes;
+}
+
+function encrypt(bytes: Uint8Array, password: string): Uint8Array {
+  const doc = mupdf.Document.openDocument(bytes, "application/pdf") as mupdf.PDFDocument;
+  const options = `encrypt=aes-256,user-password=${password},owner-password=${password}-owner`;
+  return doc.saveToBuffer(options).asUint8Array().slice();
 }
 
 /** Renders each page to a PNG and builds a new PDF containing only those images. */

@@ -17,7 +17,7 @@ async function extractFixture(name: string) {
 }
 
 describe("text extraction + line grouping on fixtures", () => {
-  it.each(listFixtures().filter((f) => !f.scanDpi).map((f) => f.name))("%s: grouped lines match the source lines", async (name) => {
+  it.each(listFixtures().filter((f) => !f.scanDpi && !f.password).map((f) => f.name))("%s: grouped lines match the source lines", async (name) => {
     const fixture = getFixture(name);
     const pages = await extractFixture(name);
     fixture.pages.forEach((spec, pageIndex) => {

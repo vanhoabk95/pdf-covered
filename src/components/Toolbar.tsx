@@ -154,8 +154,15 @@ export function Toolbar({ onOpen, onExport, onOpenSettings }: ToolbarProps) {
           <Icon name="gear" />
         </button>
         {onExport && (
-          <button className="btn btn-primary" disabled={!ready} onClick={onExport} title="Permanently remove hidden content (Ctrl+E)">
-            Export Redacted PDF
+          <button
+            className="btn btn-primary"
+            disabled={!ready}
+            onClick={onExport}
+            title="Permanently remove hidden content (Ctrl+E)"
+            aria-label="Export Redacted PDF"
+          >
+            <span className="label-long">Export Redacted PDF</span>
+            <span className="label-short">Export</span>
           </button>
         )}
       </div>

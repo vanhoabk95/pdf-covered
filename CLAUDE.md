@@ -128,6 +128,15 @@ tests/        integration + e2e
 - Node tests render with MuPDF (`tests/helpers/ocr.ts`); the app renders with PDF.js.
 - Tesseract `{code, data}` language objects don't work in v7 — use `langPath` + `gzip: true`.
 
+## Hardening (Phase G)
+- Session cache (`state/sessionCache.ts`): SHA-256 of file → complete analysis (per OCR setting)
+  and user decisions, LRU of 3, memory only. Never persist document text, detections or passwords.
+- `useSessionDecisions` resets/restores maskStore per document hash; `useDocumentProcessing`
+  reuses cached analysis.
+- OCR failures mark the page (`ocrError`), show in the sidebar and require acknowledgement on export.
+- Window min size 960×560; the toolbar must not overflow at 960px (labels collapse below 1080px).
+- `tests/performance.test.ts`: 100 text pages must stay far below the 3 s/page budget.
+
 ## Testing
 - Pure functions get unit tests next to them (`*.test.ts`). Node tests alias `pdfjs-dist` to the
   legacy build (vite.config.ts). `tests/helpers/makePdf.ts` builds in-memory PDFs.

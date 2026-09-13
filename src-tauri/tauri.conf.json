@@ -15,8 +15,8 @@
         "title": "ViMask",
         "width": 1280,
         "height": 840,
-        "minWidth": 720,
-        "minHeight": 480,
+        "minWidth": 960,
+        "minHeight": 560,
         "dragDropEnabled": true
       }
     ],

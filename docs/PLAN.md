@@ -1,3 +1,21 @@
+# Status (2026-09-13)
+
+| Phase | State | Commit |
+| --- | --- | --- |
+| A — Shell & viewer | done | 9096627 |
+| B — Extraction, grouping, debug overlay | done | 42c40fc |
+| C — Vietnamese detection | done | cb4f3e5 |
+| D — Masks, overlay, inspector | done | dfeb96b |
+| E — Controls, sidebar results, manual masks, settings | done | 871d916 |
+| F — Redaction export + verification | done | 94e7754 |
+| H — OCR for scanned PDFs (Tesseract.js instead of PaddleOCR, behind `OcrEngine`) | done | 4d3f4ee |
+| G — Hardening: passwords, session cache, OCR errors, performance, narrow windows | done | see git log |
+
+Deviations from the plan below: no zundo/Comlink (small in-house equivalents), OCR done with
+Tesseract.js, session cache in memory only, recent documents not implemented.
+
+---
+
 # Plan: PDF Vietnamese Masking Viewer — CLAUDE.md + Implementation Plan
 
 ## Context

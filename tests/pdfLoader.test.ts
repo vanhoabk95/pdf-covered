@@ -2,6 +2,7 @@ import { InvalidPDFException, PasswordException, PasswordResponses } from "pdfjs
 import { describe, expect, it } from "vitest";
 import { applyMatrix, createViewportTransform, CSS_PX_PER_PT } from "../src/pdf/coordinateTransform";
 import { destroyPdf, loadPdf, PdfLoadError, readPageGeometries, toLoadError } from "../src/pdf/pdfLoader";
+import { buildFixture, FIXTURE_PASSWORD } from "./helpers/fixtures";
 import { makePdf } from "./helpers/makePdf";
 
 describe("loadPdf", () => {
@@ -30,6 +31,17 @@ describe("loadPdf", () => {
 
   it("rejects non-PDF data", async () => {
     await expect(loadPdf(new Uint8Array([1, 2, 3, 4]))).rejects.toBeInstanceOf(PdfLoadError);
+  });
+});
+
+describe("password-protected PDFs", () => {
+  it("requires the password, rejects a wrong one and opens with the right one", async () => {
+    const bytes = await buildFixture("password-protected");
+    await expect(loadPdf(bytes)).rejects.toMatchObject({ kind: "password-required" });
+    await expect(loadPdf(bytes, "wrong")).rejects.toMatchObject({ kind: "password-incorrect" });
+    const { doc, pageCount } = await loadPdf(bytes, FIXTURE_PASSWORD);
+    expect(pageCount).toBe(1);
+    await destroyPdf(doc);
   });
 });
 
