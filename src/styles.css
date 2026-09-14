@@ -14,6 +14,20 @@
   --viewer-bg: #e8e8ed;
   --danger: #d70015;
 
+  /* macOS HIG chrome tokens (DESIGN.md `{macos-chrome.*}`) — for Toolbar, Sidebar,
+     MaskInspector and DebugOverlay chrome, alongside the marketing-derived tokens above. */
+  --chrome-label-secondary: rgba(0, 0, 0, 0.5);
+  --chrome-label-tertiary: rgba(0, 0, 0, 0.25);
+  --chrome-fill-primary: rgba(0, 0, 0, 0.1);
+  --chrome-fill-secondary: rgba(0, 0, 0, 0.078);
+  --chrome-separator: rgba(60, 60, 67, 0.29);
+
+  --fs-headline: 600 13px/16px var(--font);
+  --fs-body-ui: 400 13px/16px var(--font);
+  --fs-callout: 400 12px/15px var(--font);
+  --fs-subheadline: 400 11px/14px var(--font);
+  --fs-footnote: 400 10px/13px var(--font);
+
   --radius-xs: 5px;
   --radius-sm: 8px;
   --radius-md: 11px;
@@ -84,7 +98,7 @@ input:focus-visible {
   height: 44px;
   padding: 0 12px;
   background: var(--parchment);
-  border-bottom: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--chrome-separator);
   user-select: none;
   -webkit-user-select: none;
 }
@@ -128,13 +142,13 @@ input:focus-visible {
 }
 
 .btn-icon:hover:not(:disabled) {
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--chrome-fill-secondary);
 }
 
 .btn:disabled,
 .btn-icon:disabled,
 .segmented button:disabled {
-  color: var(--ink-muted-48);
+  color: var(--chrome-label-tertiary);
   opacity: 0.6;
 }
 
@@ -197,7 +211,7 @@ input:focus-visible {
   width: 240px;
   flex-shrink: 0;
   background: var(--parchment);
-  border-right: 1px solid var(--hairline);
+  border-right: 1px solid var(--chrome-separator);
   overflow: hidden;
 }
 
@@ -206,16 +220,15 @@ input:focus-visible {
 }
 
 .sidebar-section + .sidebar-section {
-  border-top: 1px solid var(--hairline);
+  border-top: 1px solid var(--chrome-separator);
 }
 
 .sidebar-heading {
   margin: 0 0 6px;
-  font-size: 11px;
-  font-weight: 600;
+  font: var(--fs-subheadline);
   text-transform: uppercase;
   letter-spacing: 0.4px;
-  color: var(--ink-muted-48);
+  color: var(--chrome-label-secondary);
 }
 
 .sidebar-filename {
@@ -256,7 +269,7 @@ input:focus-visible {
 }
 
 .page-row:hover {
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--chrome-fill-secondary);
 }
 
 .page-row.active {
@@ -501,10 +514,10 @@ input:focus-visible {
   bottom: 16px;
   width: 220px;
   padding: 10px 12px;
-  border: 1px solid var(--hairline);
+  border: 1px solid var(--chrome-separator);
   border-radius: var(--radius-md);
   background: var(--canvas);
-  font-size: 12px;
+  font: var(--fs-callout);
   z-index: 40;
 }
 
@@ -513,7 +526,7 @@ input:focus-visible {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 6px;
-  font-weight: 600;
+  font: var(--fs-headline);
 }
 
 .debug-check {
@@ -529,11 +542,11 @@ input:focus-visible {
   gap: 2px 8px;
   margin: 8px 0 0;
   padding-top: 8px;
-  border-top: 1px solid var(--hairline);
+  border-top: 1px solid var(--chrome-separator);
 }
 
 .debug-stats dt {
-  color: var(--ink-muted-48);
+  color: var(--chrome-label-secondary);
 }
 
 .debug-stats dd {
@@ -651,15 +664,15 @@ input:focus-visible {
 }
 
 .inspector-title {
-  font-weight: 600;
+  font: var(--fs-headline);
 }
 
 .inspector-badge {
   padding: 1px 6px;
   border-radius: 999px;
-  font-size: 11px;
+  font: var(--fs-subheadline);
   font-variant-numeric: tabular-nums;
-  background: rgba(0, 0, 0, 0.06);
+  background: var(--chrome-fill-primary);
 }
 
 .inspector-badge.tier-uncertain {
@@ -707,9 +720,9 @@ input:focus-visible {
 .inspector-note {
   margin: 6px 0 0;
   padding-top: 6px;
-  border-top: 1px solid var(--hairline);
-  font-size: 11px;
-  color: var(--ink-muted-48);
+  border-top: 1px solid var(--chrome-separator);
+  font: var(--fs-subheadline);
+  color: var(--chrome-label-secondary);
 }
 
 /* ---------- Switch ---------- */
@@ -910,7 +923,7 @@ input:focus-visible {
 }
 
 .result-row:hover {
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--chrome-fill-secondary);
 }
 
 .result-main {

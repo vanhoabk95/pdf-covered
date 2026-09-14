@@ -271,6 +271,52 @@ components:
     textColor: "{colors.ink-muted-80}"
     typography: "{typography.fine-print}"
     padding: 64px
+
+macos-chrome:
+  colors:
+    accent-system-blue: "#0088ff"
+    system-red: "#ff383c"
+    label-primary: "#000000d9"
+    label-secondary: "#00000080"
+    label-tertiary: "#00000040"
+    label-quaternary: "#0000001a"
+    label-quinary: "#0000000d"
+    fill-primary: "#0000001a"
+    fill-secondary: "#00000014"
+    gray: "#8e8e93"
+    separator: "#3c3c434a"
+    window-background: "#ffffff"
+  typography:
+    headline:
+      fontFamily: "SF Pro, system-ui, -apple-system, sans-serif"
+      fontSize: 13px
+      fontWeight: 600
+      lineHeight: 16px
+    body:
+      fontFamily: "SF Pro, system-ui, -apple-system, sans-serif"
+      fontSize: 13px
+      fontWeight: 400
+      lineHeight: 16px
+    callout:
+      fontFamily: "SF Pro, system-ui, -apple-system, sans-serif"
+      fontSize: 12px
+      fontWeight: 400
+      lineHeight: 15px
+    subheadline:
+      fontFamily: "SF Pro, system-ui, -apple-system, sans-serif"
+      fontSize: 11px
+      fontWeight: 400
+      lineHeight: 14px
+    footnote:
+      fontFamily: "SF Pro, system-ui, -apple-system, sans-serif"
+      fontSize: 10px
+      fontWeight: 400
+      lineHeight: 13px
+    caption1:
+      fontFamily: "SF Pro, system-ui, -apple-system, sans-serif"
+      fontSize: 10px
+      fontWeight: 400
+      lineHeight: 13px
 ---
 
 ## Overview
@@ -551,6 +597,47 @@ The structural breakpoints that matter for agents: 1440px (content lock), 1068px
 5. Display headlines stay SF Pro Display 600 with negative letter-spacing. Body stays SF Pro Text 400 at 17px. The boundary is unbreakable.
 6. The single drop-shadow (`rgba(0, 0, 0, 0.22) 3px 5px 30px`) is reserved for product photography only.
 7. When in doubt about emphasis: alternate surface (light → dark tile) before adding chrome.
+
+## macOS-Native Chrome Tokens (`{macos-chrome.*}`)
+
+> **Source:** Sketch library "Apple macOS 27 UI Kit" (Apple's own macOS HIG symbol/color/text-style
+> kit), values read from the Light theme via the Sketch MCP bridge. The rest of this document
+> (`{colors.*}`, `{typography.*}`) is adapted from Apple's **marketing** site (apple.com) — pill
+> buttons, Action Blue, product tiles. That language fits page-like/marketing surfaces. This app is
+> a desktop **utility window** (Toolbar, Sidebar, MaskInspector, DebugOverlay), so its window chrome
+> should read as native macOS HIG rather than marketing web. Use `{macos-chrome.*}` for chrome —
+> Toolbar, Sidebar, list rows, tooltips, disabled/secondary text — and keep `{colors.primary}`
+> (#0066cc, already used throughout the code) as the one interactive accent so behavior doesn't
+> change; `{macos-chrome.colors.accent-system-blue}` is documented for reference only, not adopted,
+> to avoid a two-blue app.
+
+- **Label opacities** (`label-primary` → `label-quinary`): black at decreasing alpha (85%, 50%, 25%,
+  10%, 5%). This is how macOS actually layers text hierarchy — prefer this ladder over inventing new
+  grays when a component needs more than the two `ink-muted-*` steps already in `{colors.*}` (e.g.
+  disabled toolbar buttons, sidebar secondary metadata, tooltip text).
+- **Fills** (`fill-primary`, `fill-secondary`): black at 10%/8% alpha — the hover/pressed background
+  for a borderless toolbar or sidebar row, distinct from the pill/bordered buttons defined in
+  `{components.*}`.
+- **Separator** (`#3c3c434a`, black ~29% alpha): the actual native hairline; softer and
+  alpha-based (survives light/dark backgrounds) versus the fixed `{colors.hairline}` (#e0e0e0).
+  Prefer `{macos-chrome.colors.separator}` for the Toolbar/Sidebar boundary and MaskInspector row
+  dividers; keep `{colors.hairline}` where a fixed hex is already relied on elsewhere.
+- **Window background** (`#ffffff`) matches `{colors.canvas}` already — no change needed there.
+- **Typography** (`headline` 13/600, `body` 13/400, `callout` 12/400, `subheadline` 11/400,
+  `footnote`/`caption1` 10/400): this is the real macOS UI type scale (line-heights confirmed from
+  the kit; font sizes are Apple's published HIG values for the Regular size class). It sits below
+  the marketing `{typography.*}` scale (whose smallest is `fine-print` 12px) and matches DESIGN.md's
+  own stated UI baseline of 13–14px system-ui — use `headline`/`body` for Toolbar labels and
+  MaskInspector field labels, `callout`/`subheadline` for Sidebar row text, `footnote`/`caption1`
+  for tooltips and debug overlay readouts.
+- **Symbols not adopted as tokens**: the kit's `Toggles - Checkboxes`/`Switches` (Checked/Mixed/
+  Unchecked, per-size Idle/Hover/Clicked/Disabled) and `Segmented Controls` (Duo/Trio) confirm the
+  *shape* of native macOS controls, useful as a reference when styling MaskInspector's
+  confirm/reveal/ignore controls, but no color/size values were pulled for them — style those with
+  existing `{rounded.*}`/`{spacing.*}` tokens rather than inventing new ones.
+- **Not present in the kit at all**: badges/pills/chips/tags. The app's amber-dashed "uncertain %"
+  treatment (see UI section, top of this file) is a deliberate original choice, not a native pattern
+  — keep it as is.
 
 ## Known Gaps
 
